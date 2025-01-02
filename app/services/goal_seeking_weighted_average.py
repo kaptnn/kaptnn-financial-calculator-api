@@ -1,5 +1,5 @@
 from scipy.optimize import root_scalar
-from openpyxl import Workbook
+from openpyxl import Workbook # type: ignore
 from typing import List
 
 class GoalSeekingWeightedAverage:

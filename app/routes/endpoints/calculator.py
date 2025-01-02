@@ -6,7 +6,7 @@ from app.services.present_value_calculator import PresentValueServices
 from app.services.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
 
-router = APIRouter(prefix="/calculator", tags=["Calculator"])
+router = APIRouter(prefix="/calculator", tags=["calculator"])
 
 @router.get("/addition", status_code=status.HTTP_200_OK)
 def addition(
