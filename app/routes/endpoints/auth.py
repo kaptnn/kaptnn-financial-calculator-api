@@ -22,3 +22,10 @@ def sign_in(
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
     return service.sign_in(credentials)
+
+@router.post("/logout", status_code=status.HTTP_200_OK)
+@inject
+def sign_out(
+    service: AuthService = Depends(Provide[Container.auth_service]),
+):
+    return service.sign_out()

@@ -2,12 +2,14 @@ import bcrypt
 import base64
 from typing import Any
 from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 from app.core import security
 from app.repositories.user_repo import UserRepository
 from app.schema.auth_schema import RegisterSchema, LoginSchema
 from app.models.profile_model import Profile
 from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
+from datetime import timedelta
 
 class AuthService(BaseService):
     def __init__(self, user_repository: UserRepository):
@@ -49,25 +51,46 @@ class AuthService(BaseService):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         access_token = security.create_access_token(
-            data={
-                "sub": str(result[0].id)
-            }
+            data={"sub": str(result[0].id)},
         )
 
         refresh_token = security.create_refresh_token(
-            data={
-                "sub": str(result[0].id)
-            }
+            data={"sub": str(result[0].id)},
         )
 
-        return {
-            "message": "User successfully logged in",
-            "token": {
-                "token_type": "bearer",
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            },
-        }
+        response = JSONResponse(content={
+                                            "message": "User successfully logged in",
+                                            "data": {
+                                                "token": "bearer",
+                                                "access_token": access_token,
+                                                "refresh_token": refresh_token
+                                            }
+                                        })
+        
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=False,
+            samesite="none"
+        )
+
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=False,
+            samesite="none"
+        )
+        
+        return response
+    
+    def sign_out(self):
+        response = JSONResponse(content={"message": "Logged out"})
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+
+        return response
         
     def hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt()
