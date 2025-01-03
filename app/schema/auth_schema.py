@@ -1,11 +1,10 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 class RegisterSchema(BaseModel):
     name: str
     email: str
     company: str
     password: str
-    confirm_password: str
     
 class RegisterResult(BaseModel):
     message: str

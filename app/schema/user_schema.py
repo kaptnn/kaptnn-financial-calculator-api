@@ -34,7 +34,6 @@ class FindUserByOptions(BaseModel):
     option: str
     value: str | int
 
-
 class FindUserByOptionsResult(BaseModel):
     data: Optional[User]
     message: str
@@ -42,7 +41,6 @@ class FindUserByOptionsResult(BaseModel):
 class AddPersonalInfo(BaseModel):
     company: str
     membership: Membership
-
 
 class PersonalInfo(Profile, AddPersonalInfo): ...
 

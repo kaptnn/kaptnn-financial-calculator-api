@@ -7,7 +7,7 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/signup", status_code=status.HTTP_201_CREATED, response_model=RegisterResult)
+@router.post("/register", status_code=status.HTTP_201_CREATED, response_model=RegisterResult)
 @inject
 def sign_up(
     user: RegisterSchema,
