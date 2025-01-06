@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import List
 from app.services.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
-router = APIRouter(prefix="/goal-seeking", tags=["Goal Seeking"])
+router = APIRouter(prefix="/goal-seeking", tags=["goal seeking"])
 
 @router.get("/weighted-average", status_code=status.HTTP_200_OK)
 def goal_seeking(
