@@ -5,7 +5,6 @@ from app.services.depreciation_calculator import PenyusutanCalculatorServices
 from app.services.present_value_calculator import PresentValueServices
 from app.services.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
-
 router = APIRouter(prefix="/calculator", tags=["calculator"])
 
 @router.get("/addition", status_code=status.HTTP_200_OK)
@@ -47,7 +46,7 @@ def division(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-@router.get("/penyusutan", status_code=status.HTTP_200_OK)
+@router.get("/depreciation", status_code=status.HTTP_200_OK)
 def penyusutan(
     harga_perolehan: float = Query(..., description="Acquisition cost (must be > 0)"),
     estimasi_umur: float = Query(..., description="Estimated useful life in years (must be > 0)"),

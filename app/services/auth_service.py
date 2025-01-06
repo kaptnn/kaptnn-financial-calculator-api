@@ -9,7 +9,6 @@ from app.schema.auth_schema import RegisterSchema, LoginSchema
 from app.models.profile_model import Profile
 from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
-from datetime import timedelta
 
 class AuthService(BaseService):
     def __init__(self, user_repository: UserRepository):
@@ -51,21 +50,21 @@ class AuthService(BaseService):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         access_token = security.create_access_token(
-            data={"sub": str(result[0].id)},
+            data={"sub": str(result[0].id), "membership_status": result[1].membership_status.value},
         )
 
         refresh_token = security.create_refresh_token(
             data={"sub": str(result[0].id)},
         )
 
-        response = JSONResponse(content={
-                                            "message": "User successfully logged in",
-                                            "data": {
-                                                "token": "bearer",
-                                                "access_token": access_token,
-                                                "refresh_token": refresh_token
-                                            }
-                                        })
+        response = JSONResponse(
+                    content={
+                        "message": "User successfully logged in",
+                        "data": {
+                            "access_token": access_token,
+                            "refresh_token": refresh_token
+                        }
+                    })
         
         response.set_cookie(
             key="access_token",
@@ -95,7 +94,6 @@ class AuthService(BaseService):
     def hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-
         return base64.b64encode(hashed).decode("utf-8")
     
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:

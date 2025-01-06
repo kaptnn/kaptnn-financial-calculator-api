@@ -22,7 +22,7 @@ def get_user_by_options(
         "message": "User retrieved successfully"
     }
 
-@router.post("/me/attach-profile", status_code=status.HTTP_201_CREATED, response_model=AddPersonalInfoResult, response_model_exclude_none=True)
+@router.post("/me/profile", status_code=status.HTTP_201_CREATED, response_model=AddPersonalInfoResult, response_model_exclude_none=True)
 @inject
 def attach_user_profile(
     profile_info,
