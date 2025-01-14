@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Any, Union, TypedDict, Optional
+from typing import Union, TypedDict, Optional
 from fastapi import HTTPException
+from sqlmodel import asc, desc
 from app.models.profile_model import Profile 
+from app.models.user_model import User
 from app.repositories.user_repo import UserRepository 
 from app.services.base_service import BaseService
 
@@ -17,7 +19,9 @@ class UserProfileDict(TypedDict):
     id: int
     user_id: int
     company: str
+    role: str
     membership: str
+    is_verified: bool
     created_at: datetime | None
     updated_at: datetime | None
 
@@ -26,11 +30,24 @@ class UserService(BaseService):
         self.user_repository = user_repository
         super().__init__(user_repository)
 
-    def get_users(self) -> dict[str, Any]:
-        data = self.user_repository.get_users()
+    def get_users(self, page: int, limit: int, sort: str, order: str):
+        users = self.user_repository.get_users()
+
+        if sort in users[0]:
+            reverse = True if order == "desc" else False
+            users = sorted(users, key=lambda x: x.get(sort, ""), reverse=reverse)
+        else:
+            raise ValueError(f"Invalid sort field: {sort}")
+
+        total_items = len(users)
+        total_pages = (total_items + limit - 1) // limit
+        offset = (page - 1) * limit
+        paginated_users = users[offset : offset + limit]
+
         return {
-            "data": data,
-            "message": "Users retrieved successfully"
+            "results": paginated_users,
+            "total_items": total_items,
+            "total_pages": total_pages,
         }
 
     def get_user_by_options(self, option: str, value: Union[str, int]) -> UserDict:
@@ -43,20 +60,21 @@ class UserService(BaseService):
             id=user.id or 0,
             name=user.name,
             email=user.email,
-            password=user.password,
             created_at=user.created_at,
             updated_at=user.updated_at,
             profile=UserProfileDict(
                 id=profile.id,
                 user_id=profile.user_id,
                 company=profile.company if profile.company else "",
+                role=profile.role,
                 membership=profile.membership_status,
+                is_verified=profile.is_verified,
                 created_at=profile.created_at,
                 updated_at=profile.updated_at
             ) if profile else None
         )
 
-    def attach_user_profile(self, user_id: int, profile_info) -> Profile:
+    def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
         user = self.user_repository.get_user_by_options("id", user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")

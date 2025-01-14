@@ -2,19 +2,22 @@ from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 from app.schema.base_schema import ModelBaseInfo, FindBase
-from app.models.profile_model import Membership
+from app.models.profile_model import Membership, Role
 from app.utils.schema import AllOptional
 
 class Profile(BaseModel):
     id: int
     user_id: int
     company: str
+    role: Role
     membership: Membership
+    is_verified: bool
     created_at: datetime | None
     updated_at: datetime | None
     
 class BaseUser(BaseModel):
     id: int
+    name: str
     email: str
     password: Optional[str]
     created_at: Optional[datetime]

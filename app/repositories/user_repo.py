@@ -20,14 +20,15 @@ class UserRepository(BaseRepository):
                     "id": user.id,
                     "name": user.name,
                     "email": user.email,
-                    "password": user.password,
                     "created_at": user.created_at,
                     "updated_at": user.updated_at,
                     "profile": {
                         "id": profile.id,
                         "user_id": profile.user_id,
                         "company": profile.company,
+                        "role": profile.role,
                         "membership": profile.membership_status,
+                        "is_verified": profile.is_verified,
                         "created_at": profile.created_at,
                         "updated_at": profile.updated_at,
                     }
