@@ -39,6 +39,17 @@ class Configs(BaseSettings):
         f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{ENV_DATABASE_MAPPER[ENV]}"
     )
 
+    MAIL_USERNAME: str = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD")
+    MAIL_FROM: str = os.getenv("MAIL_FROM")
+    MAIL_PORT: int = int(os.getenv("MAIL_PORT", 587))
+    MAIL_SERVER: str = os.getenv("MAIL_SERVER")
+    MAIL_FROM_NAME: str = os.getenv("MAIL_FROM_NAME")
+    MAIL_STARTTLS: bool = os.getenv("MAIL_STARTTLS", "true").lower() == "true"
+    MAIL_SSL_TLS: bool = os.getenv("MAIL_SSL_TLS", "false").lower() == "true"
+    USE_CREDENTIALS: bool = os.getenv("USE_CREDENTIALS", "true").lower() == "true"
+    VALIDATE_CERTS: bool = os.getenv("VALIDATE_CERTS", "true").lower() == "true"
+
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "secret")
     JWT_ACCESS_TOKEN_EXP: str = os.getenv("ACCESS_TOKEN_EXP", "1d")
     JWT_REFRESH_TOKEN_EXP: str = os.getenv("REFRESH_TOKEN_EXP", "7d")
