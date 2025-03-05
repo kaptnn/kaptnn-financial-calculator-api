@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import List
-from app.services.goal_seeking_weighted_average import GoalSeekingWeightedAverage
+from app.services.calculators.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
 router = APIRouter(prefix="/goal-seeking", tags=["goal seeking"])
 

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import List
-from app.services.calculator_service import CalculatorServices
-from app.services.depreciation_calculator import PenyusutanCalculatorServices
-from app.services.present_value_calculator import PresentValueServices
-from app.services.goal_seeking_weighted_average import GoalSeekingWeightedAverage
+from app.services.calculators.calculator_service import CalculatorServices
+from app.services.calculators.depreciation_calculator import PenyusutanCalculatorServices
+from app.services.calculators.present_value_calculator import PresentValueServices
+from app.services.calculators.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
 router = APIRouter(prefix="/calculator", tags=["calculator"])
 
