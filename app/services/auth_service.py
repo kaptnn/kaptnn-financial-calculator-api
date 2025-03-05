@@ -41,7 +41,7 @@ class AuthService(BaseService):
         if not new_user:
             raise InternalServerError("Failed to create user. Please try again later")
 
-        user_profile = self.user_repository.create_user_profile(company=user.company, user_id=new_user.id)
+        user_profile = self.user_repository.create_user_profile(company=new_user.company, user_id=new_user.id)
 
         # destination_email = "elsamrafisptr@gmail.com"
         # self.send_verification_email(background_tasks, destination_email, new_user, user_profile)
