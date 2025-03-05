@@ -28,7 +28,7 @@ class App(FastAPI):
 
         @self.app.get("/")
         def root():
-            return {"message": "Welcome to KAP TNN Calculator API " + configs.DB_URI}
+            return {"message": "Welcome to KAP TNN Calculator API"}
         
         self.app.include_router(v1_routers, prefix=configs.API_PREFIX)
         

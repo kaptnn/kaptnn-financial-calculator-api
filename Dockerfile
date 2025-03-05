@@ -13,8 +13,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-COPY .env .env
-
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 80
