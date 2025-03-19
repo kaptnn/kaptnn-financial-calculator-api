@@ -59,6 +59,14 @@ class Configs(BaseSettings):
         os.getenv("CORS_ALLOWED_HOSTS", "*").split(",") if os.getenv("CORS_ALLOWED_HOSTS") != "*" else ["*"]
     )
 
+    APPLICATION_ID: str = os.getenv("APPLICATION_ID", "your_application_id")
+    CLIENT_SECRET: str = os.getenv("CLIENT_SECRET", "your_client_secret")
+    TENANT_ID: str = os.getenv("TENANT_ID")
+    REDIRECT_URI: str = "http://localhost:8000/auth/callback"
+    MS_GRAPH_BASE_URL: str = "https://graph.microsoft.com/v1.0"
+    TOKEN_URL: str = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
+
+
     PAGE: int = 1
     PAGE_SIZE: int = 20
     ORDERING: str = "-id"
