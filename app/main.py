@@ -12,6 +12,8 @@ class App(FastAPI):
     def __init__(self):
         self.app: FastAPI = FastAPI(
             title="KAP TNN Calculator API",
+            docs_url=f"{configs.API_PREFIX}/docs",
+            redoc_url=f"{configs.API_PREFIX}/redoc",
             version="1.1.0",
         )
 

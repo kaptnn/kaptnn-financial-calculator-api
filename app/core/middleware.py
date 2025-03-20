@@ -1,8 +1,8 @@
-from functools import wraps
-from dependency_injector.wiring import inject as di_inject
 from loguru import logger
-from app.services.base_service import BaseService
+from functools import wraps
 from typing import Callable, Any
+from dependency_injector.wiring import inject as di_inject
+from app.services.base_service import BaseService
 
 def inject(func: Callable[..., Any]) -> Callable[..., Any]:
     @di_inject
