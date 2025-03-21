@@ -8,8 +8,14 @@ from sqlmodel import SQLModel
 from alembic import context
 
 from app.core.config import configs
+from app.models.base_model import BaseModel
 from app.models.user_model import User
 from app.models.profile_model import Profile
+from app.models.company_model import Company
+from app.models.doc_model import Document
+from app.models.doc_category_model import DocumentCategory
+from app.models.doc_request_model import DocumentRequest
+from app.models.doc_permission_model import DocumentPermission
 
 cmd_kwargs = context.get_x_argument(as_dictionary=True)
 if "ENV" in cmd_kwargs:
@@ -18,28 +24,14 @@ if "ENV" in cmd_kwargs:
 else:
     ENV = "development"
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
 if not config.get_main_option("sqlalchemy.url"):
     config.set_main_option("sqlalchemy.url", configs.DB_URI)
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = SQLModel.metadata
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
-
+target_metadata = [SQLModel.metadata]
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

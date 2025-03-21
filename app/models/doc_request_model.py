@@ -2,6 +2,7 @@ import enum
 import uuid
 from typing import Optional
 from datetime import datetime
+from sqlalchemy import Column, DateTime, func
 from sqlmodel import Field, Relationship, Column, Enum
 from app.models.user_model import User
 from app.models.base_model import BaseModel
@@ -22,6 +23,9 @@ class DocumentRequest(BaseModel, table=True):
     upload_date: Optional[datetime] = Field(default=None)
     status: RequestStatus = Field(sa_column=Column(Enum(RequestStatus)), default=RequestStatus.pending)
 
+    created_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), default=func.now()))
+    updated_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), default=func.now(), onupdate=func.now()))
+    
     admin: Optional["User"] = Relationship(sa_relationship_kwargs={"foreign_keys": "DocumentRequest.admin_id"})
     target_user: Optional["User"] = Relationship(sa_relationship_kwargs={"foreign_keys": "DocumentRequest.target_user_id"})
     category: Optional["DocumentCategory"] = Relationship()
