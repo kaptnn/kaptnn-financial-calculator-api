@@ -1,6 +1,6 @@
 from contextlib import AbstractContextManager
-from typing import Any, Callable, Type, TypeVar
 from sqlmodel import SQLModel, Session, select
+from typing import Any, Callable, Type, TypeVar
 
 T = TypeVar("T", bound=SQLModel)
 
@@ -14,7 +14,7 @@ class BaseRepository:
             statement = select(self.model)
             result = session.exec(statement).all()
 
-            data = [self.model.from_orm(item) for item in result]
+            data = [self.model.model_validate(item) for item in result]
 
             return {
                 "data": data,

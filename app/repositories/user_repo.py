@@ -1,6 +1,6 @@
+from sqlmodel import Session, select
 from contextlib import AbstractContextManager
 from typing import Callable, Union, Optional, Tuple
-from sqlmodel import Session, select
 from app.models.user_model import User
 from app.models.profile_model import Profile
 from app.repositories.base_repo import BaseRepository
@@ -20,12 +20,12 @@ class UserRepository(BaseRepository):
                     "id": user.id,
                     "name": user.name,
                     "email": user.email,
+                    "company_id": user.company_id,
                     "created_at": user.created_at,
                     "updated_at": user.updated_at,
                     "profile": {
                         "id": profile.id,
                         "user_id": profile.user_id,
-                        "company": profile.company,
                         "role": profile.role,
                         "membership": profile.membership_status,
                         "is_verified": profile.is_verified,
