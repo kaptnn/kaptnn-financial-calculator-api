@@ -3,7 +3,7 @@ from pydantic import BaseModel
 class RegisterSchema(BaseModel):
     name: str
     email: str
-    company: str
+    company_id: str
     password: str
     
 class RegisterResult(BaseModel):

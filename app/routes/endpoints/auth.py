@@ -13,11 +13,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 @inject
 def sign_up(
-    background_tasks: BackgroundTasks,
     user: RegisterSchema,
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
-    result = service.sign_up(background_tasks, user)
+    result = service.sign_up(user)
     return result
 
 @router.post("/login", status_code=status.HTTP_200_OK, response_model=LoginResult)

@@ -12,7 +12,7 @@ router = APIRouter(prefix="/users", tags=["user"])
 
 @router.get("/")
 @inject
-def get_all_users(
+async def get_all_users(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(5, ge=1, le=100, description="Number of users per page"),
     sort: str = Query("created_at", description="Field to sort by"),
@@ -33,7 +33,7 @@ def get_all_users(
 
 @router.get("/user/{userId}")
 @inject
-def get_user_by_email(
+async def get_user_by_email(
     userId: str,
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: UserDict = Depends(get_current_user),
@@ -46,7 +46,7 @@ def get_user_by_email(
 
 @router.get("/me", response_model=FindUserByOptionsResult, response_model_exclude_none=True)
 @inject
-def get_user_by_options(
+async def get_user_by_options(
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: UserDict = Depends(get_current_user)
 ):
@@ -60,7 +60,7 @@ def get_user_by_options(
 
 @router.post("/me/profile", status_code=status.HTTP_201_CREATED, response_model=AddPersonalInfoResult, response_model_exclude_none=True)
 @inject
-def attach_user_profile(
+async def attach_user_profile(
     profile_info,
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: UserDict = Depends(get_current_user),
@@ -76,7 +76,7 @@ def attach_user_profile(
 
 @router.put("/verify", status_code=status.HTTP_200_OK)
 @inject
-def verify_user(
+async def verify_user(
     user_id: int = Query(..., description="ID of the user to verify"),
     action: Literal["approve", "reject"] = Query(..., description="Action to perform: 'approve' or 'reject'"),
     service: UserService = Depends(Provide[Container.user_service]),

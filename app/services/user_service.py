@@ -12,13 +12,13 @@ class UserDict(TypedDict):
     name: str
     email: str
     password: str
+    company_id: str
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
 class UserProfileDict(TypedDict):
     id: int
     user_id: int
-    company: str
     role: str
     membership: str
     is_verified: bool
@@ -26,11 +26,11 @@ class UserProfileDict(TypedDict):
     updated_at: datetime | None
 
 class UserService(BaseService):
-    def __init__(self, user_repository: UserRepository):
+    async def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
         super().__init__(user_repository)
 
-    def get_users(self, page: int, limit: int, sort: str, order: str):
+    async def get_users(self, page: int, limit: int, sort: str, order: str):
         users = self.user_repository.get_users()
 
         if sort in users[0]:
@@ -50,7 +50,7 @@ class UserService(BaseService):
             "total_pages": total_pages,
         }
 
-    def get_user_by_options(self, option: str, value: Union[str, int]) -> UserDict:
+    async def get_user_by_options(self, option: str, value: Union[str, int]) -> UserDict:
         user, profile = self.user_repository.get_user_by_options(option, value) or (None, None)
 
         if user is None:
@@ -60,12 +60,12 @@ class UserService(BaseService):
             id=user.id or 0,
             name=user.name,
             email=user.email,
+            company_id=user.company_id,
             created_at=user.created_at,
             updated_at=user.updated_at,
             profile=UserProfileDict(
                 id=profile.id,
                 user_id=profile.user_id,
-                company=profile.company if profile.company else "",
                 role=profile.role,
                 membership=profile.membership_status,
                 is_verified=profile.is_verified,
@@ -74,7 +74,7 @@ class UserService(BaseService):
             ) if profile else None
         )
 
-    def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
+    async def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
         user = self.user_repository.get_user_by_options("id", user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
