@@ -1,9 +1,9 @@
+import uuid
 import bcrypt
 import base64
 from typing import Any
-from fastapi import BackgroundTasks, HTTPException
+from fastapi import HTTPException
 from fastapi.responses import JSONResponse
-from fastapi_mail import FastMail, MessageSchema
 from app.core import security
 from app.repositories.user_repo import UserRepository
 from app.schema.auth_schema import RegisterSchema, LoginSchema
@@ -11,25 +11,25 @@ from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
 
 class AuthService(BaseService):
-    async def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
         super().__init__(user_repository)
 
-    async def sign_up(self, user: RegisterSchema) -> dict:
+    def sign_up(self, user: RegisterSchema) -> dict:
         is_user_exist = self.user_repository.get_user_by_options("email", user.email)
         
         if is_user_exist is not None:
             raise DuplicatedError("User with this email already exists")
 
         encrypted_password = self.hash_password(user.password)
-        new_user = self.user_repository.create_user(name=user.name, email=user.email, password=encrypted_password, company_id=user.company_id)
+        new_user = self.user_repository.create_user(name=user.name, email=user.email, password=encrypted_password, company_id=uuid.UUID(user.company_id))
 
         if not new_user:
             raise InternalServerError("Failed to create user. Please try again later")
 
         return {"message": "User successfully registered"}
 
-    async def sign_in(self, credentials: LoginSchema) -> Any:
+    def sign_in(self, credentials: LoginSchema) -> Any:
         result = self.user_repository.get_user_by_options("email", credentials.email)
 
         if not result:
@@ -40,7 +40,7 @@ class AuthService(BaseService):
         if not self.verify_password(credentials.password, user.password):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        access_token = security.create_access_token(data={"sub": str(user.id), "membership_status": result[1].membership_status.value})
+        access_token = security.create_access_token(data={"sub": str(user.id)})
         refresh_token = security.create_refresh_token(data={"sub": str(user.id)})
 
         response = JSONResponse(
@@ -57,17 +57,17 @@ class AuthService(BaseService):
         
         return response
 
-    async def sign_out(self):
+    def sign_out(self):
         response = JSONResponse(content={"message": "Logged out"})
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
 
-    async def hash_password(self, password: str) -> str:
+    def hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
         return base64.b64encode(hashed).decode("utf-8")
     
-    async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         hashed_bytes = base64.b64decode(hashed_password)
         return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_bytes)

@@ -1,23 +1,22 @@
+import uuid 
 from datetime import datetime
 from typing import Union, TypedDict, Optional
 from fastapi import HTTPException
-from sqlmodel import asc, desc
 from app.models.profile_model import Profile 
-from app.models.user_model import User
 from app.repositories.user_repo import UserRepository 
 from app.services.base_service import BaseService
 
 class UserDict(TypedDict):
-    id: int
+    id: str
     name: str
     email: str
     password: str
-    company_id: str
+    company_id: uuid.UUID
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
 class UserProfileDict(TypedDict):
-    id: int
+    id: str
     user_id: int
     role: str
     membership: str
@@ -26,11 +25,11 @@ class UserProfileDict(TypedDict):
     updated_at: datetime | None
 
 class UserService(BaseService):
-    async def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
         super().__init__(user_repository)
 
-    async def get_users(self, page: int, limit: int, sort: str, order: str):
+    def get_users(self, page: int, limit: int, sort: str, order: str):
         users = self.user_repository.get_users()
 
         if sort in users[0]:
@@ -50,7 +49,7 @@ class UserService(BaseService):
             "total_pages": total_pages,
         }
 
-    async def get_user_by_options(self, option: str, value: Union[str, int]) -> UserDict:
+    def get_user_by_options(self, option: str, value: Union[str, int]) -> UserDict:
         user, profile = self.user_repository.get_user_by_options(option, value) or (None, None)
 
         if user is None:
@@ -74,7 +73,7 @@ class UserService(BaseService):
             ) if profile else None
         )
 
-    async def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
+    def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
         user = self.user_repository.get_user_by_options("id", user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")

@@ -1,9 +1,7 @@
 from sqlmodel import Session, select
 from contextlib import AbstractContextManager
-from typing import Callable, Union, Optional, Tuple
-from app.models.user_model import User
+from typing import Callable, Optional, Union
 from app.models.company_model import Company
-from app.models.profile_model import Profile
 from app.repositories.base_repo import BaseRepository
 
 class CompanyRepository(BaseRepository):
@@ -19,7 +17,7 @@ class CompanyRepository(BaseRepository):
             data = [
                 {
                     "id": company.id,
-                    "company_name": company.name,
+                    "company_name": company.company_name,
                     "created_at": company.created_at,
                     "updated_at": company.updated_at,
                 }
@@ -28,46 +26,60 @@ class CompanyRepository(BaseRepository):
 
             return data
         
-    def get_company_by_options(self, option: str, value: Union[str, int]) -> Optional[Tuple[User, Profile]]:
-        if option not in ["id"]:
+    def get_company_by_options(self, option: str, value: Union[str, str]) -> Optional[Company]:
+        if option not in ["id", "company_name"]:
             raise ValueError("Invalid option")
 
         with self.session_factory() as session:
-            statement = select(Company)
+            statement = select(Company).where(getattr(Company, option) == value)
             result = session.exec(statement).one_or_none()
 
             if result is None:
                 return None
-            
-            company = result
+
+            session.expunge_all()
+            return result
+        
+    def create_company(self, company_name: str) -> Company:
+        with self.session_factory() as session:
+            company = Company(id=None, company_name=company_name, created_at=None, updated_at=None)
+
+            session.add(company)
+            session.commit()
+            session.refresh(company)
 
             session.expunge_all()
             return company
         
-    def create_company(self, name: str, email: str, password: str) -> User:
+    def update_company(self, id: str, company: dict) -> Optional[Company]:
         with self.session_factory() as session:
-            user = User(name=name, email=email, password=password, id=None, created_at=None, updated_at=None)
-
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-
-            session.expunge_all()
-            return user
-        
-    def update_company(self, user_id: int, profile: Profile) -> Profile:
-        with self.session_factory() as session:
-            statement = select(Profile).where(Profile.user_id == user_id)
+            statement = select(Company).where(Company.id == id)
             result = session.exec(statement).one()
 
-            result = result.model_copy(update=profile.model_dump(exclude_unset=True))
+            if not result:
+                return None
+            
+            for key, value in company.items():
+                if hasattr(result, key):
+                    setattr(result, key, value)
 
-            result = session.merge(result)
+            session.add(result)
             session.commit()
             session.refresh(result)
 
             session.expunge_all()
             return result
         
-    def delete_company(self):
-        pass
+    def delete_company(self, id: str):
+        with self.session_factory() as session:
+            statement = select(Company).where(Company.id == id)
+            result = session.exec(statement).one()
+
+            if not result:
+                return False
+
+            session.delete(result)
+            session.commit()
+            
+            session.expunge_all()
+            return True

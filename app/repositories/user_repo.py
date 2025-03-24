@@ -6,11 +6,11 @@ from app.models.profile_model import Profile
 from app.repositories.base_repo import BaseRepository
 
 class UserRepository(BaseRepository):
-    async def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
+    def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
         self.session_factory = session_factory
         super().__init__(session_factory, User)
 
-    async def get_users(self):
+    def get_users(self):
         with self.session_factory() as session:
             statement = select(User, Profile).join(Profile, isouter=True)
             result = session.exec(statement).all()
@@ -38,7 +38,7 @@ class UserRepository(BaseRepository):
 
             return data
         
-    async def get_user_by_options(self, option: str, value: Union[str, int]) -> Optional[Tuple[User, Profile]]:
+    def get_user_by_options(self, option: str, value: Union[str, int]) -> Optional[Tuple[User, Profile]]:
         if option not in ["id", "email"]:
             raise ValueError("Invalid option")
 
@@ -54,7 +54,7 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return user, profile
         
-    async def create_user(self, name: str, email: str, password: str, company_id: str) -> User:
+    def create_user(self, name: str, email: str, password: str, company_id: str) -> User:
         with self.session_factory() as session:
             user = User(name=name, email=email, password=password, company_id=company_id, id=None, created_at=None, updated_at=None)
 
@@ -65,7 +65,7 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return user
         
-    async def create_user_profile(self, profile: Profile) -> Profile:
+    def create_user_profile(self, profile: Profile) -> Profile:
         with self.session_factory() as session:
             session.add(profile)
             session.commit()
@@ -74,7 +74,7 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return profile
         
-    async def update_user_profile(self, user_id: int, profile: Profile) -> Profile:
+    def update_user_profile(self, user_id: int, profile: Profile) -> Profile:
         with self.session_factory() as session:
             statement = select(Profile).where(Profile.user_id == user_id)
             result = session.exec(statement).one()

@@ -1,11 +1,8 @@
-from typing import Literal
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
-from app.models.profile_model import Role
-from app.repositories.user_repo import UserRepository
-from app.schema.auth_schema import RegisterSchema, RegisterResult, LoginSchema, LoginResult
+from app.schema.auth_schema import RegisterSchema, LoginSchema, LoginResult
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
