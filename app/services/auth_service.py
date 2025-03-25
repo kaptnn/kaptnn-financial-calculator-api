@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from app.core import security
+from app.models.profile_model import Profile
 from app.repositories.user_repo import UserRepository
 from app.schema.auth_schema import RegisterSchema, LoginSchema
 from app.core.exceptions import DuplicatedError, InternalServerError
@@ -26,6 +27,13 @@ class AuthService(BaseService):
 
         if not new_user:
             raise InternalServerError("Failed to create user. Please try again later")
+
+        new_user_profile = self.user_repository.create_user_profile(Profile(
+            user_id=new_user.id if new_user.id is not None else 0
+        ))
+
+        if not new_user_profile:
+            raise InternalServerError("Failed to create user profile. Please try again later")
 
         return {"message": "User successfully registered"}
 
