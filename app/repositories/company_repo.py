@@ -18,6 +18,9 @@ class CompanyRepository(BaseRepository):
                 {
                     "id": company.id,
                     "company_name": company.company_name,
+                    "year_of_assignment": company.year_of_assignment,
+                    "start_audit_period": company.start_audit_period,
+                    "end_audit_period": company.end_audit_period,
                     "created_at": company.created_at,
                     "updated_at": company.updated_at,
                 }

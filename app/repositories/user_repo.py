@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 from contextlib import AbstractContextManager
-from typing import Callable, Union, Optional, Tuple
+from typing import Callable, List, Union, Optional, Tuple
 from app.models.user_model import User
 from app.models.profile_model import Profile
 from app.repositories.base_repo import BaseRepository
@@ -38,21 +38,23 @@ class UserRepository(BaseRepository):
 
             return data
         
-    def get_user_by_options(self, option: str, value: Union[str, int]) -> Optional[Tuple[User, Profile]]:
-        if option not in ["id", "email"]:
+    def get_user_by_options(self, option: str, value) -> Optional[Union[Tuple[User, Profile], List[Tuple[User, Profile]]]]:
+        if option not in ["id", "email", "company_id"]:
             raise ValueError("Invalid option")
 
         with self.session_factory() as session:
             statement = select(User, Profile).join(Profile, isouter=True).where(getattr(User, option) == value)
-            result = session.exec(statement).one_or_none()
+            results = session.exec(statement).all()
 
-            if result is None:
+            if results is None:
                 return None
             
-            user, profile = result
-
             session.expunge_all()
-            return user, profile
+            
+            if option in ["id", "email"]:
+                return results[0] if results else None
+            elif option == "company_id":
+                return results
         
     def create_user(self, name: str, email: str, password: str, company_id: str) -> User:
         with self.session_factory() as session:

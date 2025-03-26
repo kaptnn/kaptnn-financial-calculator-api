@@ -9,6 +9,9 @@ class Company(BaseModel, table=True):
     __tablename__ = "companies"
 
     company_name: str = Field(unique=True)
+    year_of_assignment: int = Field()
+    start_audit_period: datetime = Field(sa_column=Column(DateTime(timezone=True)))
+    end_audit_period: datetime = Field(sa_column=Column(DateTime(timezone=True)))
 
     created_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), default=func.now()))
     updated_at: Optional[datetime] = Field(sa_column=Column(DateTime(timezone=True), default=func.now(), onupdate=func.now()))

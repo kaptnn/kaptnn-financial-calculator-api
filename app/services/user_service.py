@@ -1,6 +1,6 @@
 import uuid 
 from datetime import datetime
-from typing import Union, TypedDict, Optional
+from typing import List, Union, TypedDict, Optional
 from fastapi import HTTPException
 from app.models.profile_model import Profile 
 from app.repositories.user_repo import UserRepository 
@@ -49,29 +49,54 @@ class UserService(BaseService):
             "total_pages": total_pages,
         }
 
-    def get_user_by_options(self, option: str, value: Union[str, int]) -> UserDict:
-        user, profile = self.user_repository.get_user_by_options(option, value) or (None, None)
+    def get_user_by_options(self, option: str, value) -> Union[UserDict, List[UserDict]]:
+        result = self.user_repository.get_user_by_options(option, value)
 
-        if user is None:
+        if result is None:
             raise HTTPException(status_code=404, detail="User not found")
 
-        return UserDict(
-            id=user.id or 0,
-            name=user.name,
-            email=user.email,
-            company_id=user.company_id,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-            profile=UserProfileDict(
-                id=profile.id,
-                user_id=profile.user_id,
-                role=profile.role,
-                membership=profile.membership_status,
-                is_verified=profile.is_verified,
-                created_at=profile.created_at,
-                updated_at=profile.updated_at
-            ) if profile else None
-        )
+        if option in ["id", "email"]:
+            user, profile = result
+            return UserDict(
+                id=user.id or 0,
+                name=user.name,
+                email=user.email,
+                company_id=user.company_id,
+                created_at=user.created_at,
+                updated_at=user.updated_at,
+                profile=UserProfileDict(
+                    id=profile.id,
+                    user_id=profile.user_id,
+                    role=profile.role,
+                    membership=profile.membership_status,
+                    is_verified=profile.is_verified,
+                    created_at=profile.created_at,
+                    updated_at=profile.updated_at
+                ) if profile else None
+            )
+        elif option == "company_id":
+            users = []
+            for user, profile in result:
+                users.append(
+                    UserDict(
+                        id=user.id or 0,
+                        name=user.name,
+                        email=user.email,
+                        company_id=user.company_id,
+                        created_at=user.created_at,
+                        updated_at=user.updated_at,
+                        profile=UserProfileDict(
+                            id=profile.id,
+                            user_id=profile.user_id,
+                            role=profile.role,
+                            membership=profile.membership_status,
+                            is_verified=profile.is_verified,
+                            created_at=profile.created_at,
+                            updated_at=profile.updated_at
+                        ) if profile else None
+                    )
+                )
+            return users
 
     def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
         user = self.user_repository.get_user_by_options("id", user_id)

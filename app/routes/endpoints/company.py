@@ -17,7 +17,6 @@ def get_all_companies(
     sort: str = Query("created_at", description="Field to sort by"),
     order: str = Query("asc", regex="^(asc|desc)$", description="Sort order (asc or desc)"),
     service: CompanyService = Depends(Provide[Container.company_service]),
-    current_user: UserDict = Depends(get_current_user)
 ):
     companies = service.get_companies(page=page, limit=limit, sort=sort, order=order)
     return {
