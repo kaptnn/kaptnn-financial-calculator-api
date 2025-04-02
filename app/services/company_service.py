@@ -53,7 +53,6 @@ class CompanyService(BaseService):
             created_at=company.created_at,
             updated_at=company.updated_at,
         )
-        
 
     def create_company(self, company_name: str) -> CompanyDict:
         new_company = self.company_repository.create_company(company_name)
@@ -67,8 +66,10 @@ class CompanyService(BaseService):
             updated_at=new_company.updated_at,
         )
 
+        # It should add new folder to the one drive
+
         return {"message": "Company successfully registered", "data": result }
-    
+
     def update_company(self, id: str, company: dict) -> CompanyDict:
         existing_company = self.company_repository.get_company_by_options("id", id)
         
@@ -83,7 +84,7 @@ class CompanyService(BaseService):
             created_at=updated_company.created_at,
             updated_at=updated_company.updated_at,
         )
-    
+
     def delete_company(self, id: str):
         existing_company = self.company_repository.get_company_by_options("id", id)
         if not existing_company:
@@ -92,6 +93,8 @@ class CompanyService(BaseService):
         success = self.company_repository.delete_company(id)
         if not success:
             raise InternalServerError("Failed to delete company. Please try again later")
+        
+        # it should delete the folder in one drive
 
         return {"message": "Company deleted successfully"}
 

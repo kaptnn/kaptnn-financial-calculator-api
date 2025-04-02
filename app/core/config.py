@@ -66,7 +66,6 @@ class Configs(BaseSettings):
     MS_GRAPH_BASE_URL: str = "https://graph.microsoft.com/v1.0"
     TOKEN_URL: str = f"https://login.microsoftonline.com/{TENANT_ID}/oauth2/v2.0/token"
 
-
     PAGE: int = 1
     PAGE_SIZE: int = 20
     ORDERING: str = "-id"
