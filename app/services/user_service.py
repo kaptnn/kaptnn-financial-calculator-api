@@ -108,3 +108,6 @@ class UserService(BaseService):
             profile=Profile(**profile_info.model_dump())
         )
         return profile
+    
+    def delete_user(self):
+        pass

@@ -98,3 +98,8 @@ def attach_user_profile(
         "data": simplified_profile,
         "message": "Profile attached successfully"
     }
+
+@router.delete("/user/id/{id}")
+@inject
+def delete_user():
+    pass

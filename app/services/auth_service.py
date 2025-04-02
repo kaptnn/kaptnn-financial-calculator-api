@@ -70,6 +70,24 @@ class AuthService(BaseService):
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
+    
+    def forgot_password(self):
+        pass
+
+    def email_verification(self):
+        pass
+
+    def renew_session(self):
+        pass
+
+    def revoke_all_sessions(self):
+        pass
+
+    def revoke_session(self):
+        pass
+
+    def sign_with_social_account(self):
+        pass
 
     def hash_password(self, password: str) -> str:
         salt = bcrypt.gensalt()

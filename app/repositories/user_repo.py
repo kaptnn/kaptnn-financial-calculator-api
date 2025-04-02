@@ -89,3 +89,6 @@ class UserRepository(BaseRepository):
 
             session.expunge_all()
             return result
+        
+    def delete_user(self):
+        pass
