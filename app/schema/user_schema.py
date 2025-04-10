@@ -17,7 +17,6 @@ class Profile(ModelBaseInfo):
 class BaseUser(BaseModel):
     name: str
     email: str
-    password: Optional[str]
     company_id: Optional[str]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
@@ -45,3 +44,6 @@ class UpdateUserProfileRequest(BaseModel):
 class UpdateUserProfileResponse(BaseModel):
     message: str
     result: Optional[User]
+
+class DeleteUserResponse(BaseModel):
+    message: str

@@ -1,14 +1,15 @@
 import uuid
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
+from app.schema.user_schema import DeleteUserResponse, FindUserByOptionsResponse, UpdateUserProfileResponse
 from app.services.user_service import UserService, UserDict
 
 router = APIRouter(prefix="/users", tags=["user"])
 
-@router.get("/")
+@router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 @inject
 def get_all_users(
     page: int = Query(1, ge=1, description="Page number"),
@@ -29,7 +30,7 @@ def get_all_users(
         },
     }
 
-@router.get("/user/id/{id}")
+@router.get("/user/id/{id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_user_by_id(
     id: str,
@@ -42,7 +43,7 @@ def get_user_by_id(
         "data": user,
     }
 
-@router.get("/user/email/{email}")
+@router.get("/user/email/{email}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_user_by_email(
     email: str,
@@ -55,7 +56,7 @@ def get_user_by_email(
         "data": user,
     }
 
-@router.get("/user/company/{company_id}")
+@router.get("/user/company/{company_id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_user_by_company(
     company_id: uuid.UUID,
@@ -68,7 +69,7 @@ def get_user_by_company(
         "data": user,
     }
 
-@router.get("/me")
+@router.get("/me", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_current_user(
     service: UserService = Depends(Provide[Container.user_service]),
@@ -82,7 +83,7 @@ def get_current_user(
         "message": "User retrieved successfully"
     }
 
-@router.post("/me/profile")
+@router.post("/me/profile", response_model=UpdateUserProfileResponse, status_code=status.HTTP_201_CREATED)
 @inject
 def attach_user_profile(
     profile_info,
@@ -98,7 +99,7 @@ def attach_user_profile(
         "message": "Profile attached successfully"
     }
 
-@router.delete("/user/id/{id}")
+@router.delete("/user/id/{id}", response_model=DeleteUserResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_user():
     pass

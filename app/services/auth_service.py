@@ -1,13 +1,12 @@
 import uuid
 import bcrypt
 import base64
-from typing import Any
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from app.core import security
 from app.models.profile_model import Profile
 from app.repositories.user_repo import UserRepository
-from app.schema.auth_schema import RegisterSchema, LoginSchema
+from app.schema.auth_schema import UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
 from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
 
@@ -16,7 +15,7 @@ class AuthService(BaseService):
         self.user_repository = user_repository
         super().__init__(user_repository)
 
-    def sign_up(self, user: RegisterSchema) -> dict:
+    def sign_up(self, user: UserRegisterRequest) -> UserRegisterResponse:
         is_user_exist = self.user_repository.get_user_by_options("email", user.email)
         
         if is_user_exist is not None:
@@ -41,7 +40,7 @@ class AuthService(BaseService):
 
         return {"message": "User successfully registered"}
 
-    def sign_in(self, credentials: LoginSchema) -> Any:
+    def sign_in(self, credentials: UserLoginRequest) -> UserLoginResponse:
         result = self.user_repository.get_user_by_options("email", credentials.email)
 
         if not result:
@@ -64,7 +63,8 @@ class AuthService(BaseService):
         response = JSONResponse(
             content={
                 "message": "User successfully logged in",
-                "data": {
+                "result": {
+                    "token_type": 'Bearer',
                     "access_token": access_token,
                     "refresh_token": refresh_token
                 }
@@ -77,7 +77,7 @@ class AuthService(BaseService):
         
         return response
 
-    def sign_out(self):
+    def sign_out(self) -> UserLogoutResponse:
         response = JSONResponse(content={"message": "Logged out"})
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")

@@ -1,3 +1,4 @@
+import uuid
 from sqlmodel import Session, select
 from contextlib import AbstractContextManager
 from typing import Callable, List, Union, Optional, Tuple
@@ -10,7 +11,7 @@ class UserRepository(BaseRepository):
         self.session_factory = session_factory
         super().__init__(session_factory, User)
 
-    def get_users(self):
+    def get_all_users(self) -> List[User]:
         with self.session_factory() as session:
             statement = select(User, Profile).join(Profile, isouter=True)
             result = session.exec(statement).all()
@@ -38,7 +39,7 @@ class UserRepository(BaseRepository):
 
             return data
         
-    def get_user_by_options(self, option: str, value) -> Optional[Union[Tuple[User, Profile], List[Tuple[User, Profile]]]]:
+    def get_user_by_options(self, option: str, value: Union[str, int, uuid.UUID]) -> Optional[Union[Tuple[User, Profile], List[Tuple[User, Profile]]]]:
         if option not in ["id", "email", "company_id"]:
             raise ValueError("Invalid option")
 
@@ -90,5 +91,16 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return result
         
-    def delete_user(self):
-        pass
+    def delete_user(self, id: str) -> bool:
+        with self.session_factory() as session:
+            statement = select(User).where(User.id == id)
+            result = session.exec(statement).one()
+
+            if not result:
+                return False
+
+            session.delete(result)
+            session.commit()
+            
+            session.expunge_all()
+            return True

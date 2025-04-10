@@ -2,29 +2,29 @@ from fastapi import APIRouter, Depends, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
-from app.schema.auth_schema import RegisterSchema, LoginSchema, LoginResult
+from app.schema.auth_schema import UserRegisterRequest, UserRegisterResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserRegisterResponse ,status_code=status.HTTP_201_CREATED)
 @inject
 def sign_up(
-    user: RegisterSchema,
+    user: UserRegisterRequest,
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
     result = service.sign_up(user)
     return result
 
-@router.post("/login", status_code=status.HTTP_200_OK, response_model=LoginResult)
+@router.post("/login", response_model=UserLoginResponse, status_code=status.HTTP_200_OK)
 @inject
 def sign_in(
-    credentials: LoginSchema,
+    credentials: UserLoginRequest,
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
     return service.sign_in(credentials)
 
-@router.post("/logout", status_code=status.HTTP_200_OK)
+@router.post("/logout", response_model=UserLogoutResponse, status_code=status.HTTP_200_OK)
 @inject
 def sign_out(
     service: AuthService = Depends(Provide[Container.auth_service]),

@@ -2,16 +2,17 @@ import uuid
 from datetime import datetime
 from typing import List, Union, TypedDict, Optional
 from fastapi import HTTPException
+from app.core.exceptions import InternalServerError
 from app.models.profile_model import Profile 
 from app.repositories.user_repo import UserRepository 
+from app.schema.user_schema import DeleteUserResponse
 from app.services.base_service import BaseService
 
 class UserDict(TypedDict):
     id: str
     name: str
     email: str
-    password: str
-    company_id: uuid.UUID
+    company_id: str
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
@@ -21,16 +22,16 @@ class UserProfileDict(TypedDict):
     role: str
     membership: str
     is_verified: bool
-    created_at: datetime | None
-    updated_at: datetime | None
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
 
 class UserService(BaseService):
     def __init__(self, user_repository: UserRepository):
         self.user_repository = user_repository
         super().__init__(user_repository)
 
-    def get_users(self, page: int, limit: int, sort: str, order: str):
-        users = self.user_repository.get_users()
+    def get_all_users(self, page: int, limit: int, sort: str, order: str) -> dict:
+        users = self.user_repository.get_all_users()
 
         if sort in users[0]:
             reverse = True if order == "desc" else False
@@ -49,7 +50,7 @@ class UserService(BaseService):
             "total_pages": total_pages,
         }
 
-    def get_user_by_options(self, option: str, value) -> Union[UserDict, List[UserDict]]:
+    def get_user_by_options(self, option: str, value: Union[str, int, uuid.UUID]) -> Union[UserDict, List[UserDict]]:
         result = self.user_repository.get_user_by_options(option, value)
 
         if result is None:
@@ -98,7 +99,7 @@ class UserService(BaseService):
                 )
             return users
 
-    def attach_user_profile(self, user_id: int, profile_info: dict) -> Profile:
+    def attach_user_profile(self, user_id: str, profile_info: dict) -> Profile:
         user = self.user_repository.get_user_by_options("id", user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
@@ -109,5 +110,13 @@ class UserService(BaseService):
         )
         return profile
     
-    def delete_user(self):
-        pass
+    def delete_user(self, user_id: str) -> DeleteUserResponse:
+        existing_user = self.user_repository.delete_user("id", user_id)
+        if not existing_user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        success = self.company_repository.delete_company(user_id)
+        if not success:
+            raise InternalServerError("Failed to delete company. Please try again later")
+
+        return {"message": "Company deleted successfully"}

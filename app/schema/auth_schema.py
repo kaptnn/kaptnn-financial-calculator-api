@@ -20,4 +20,7 @@ class Token(BaseModel):
 
 class UserLoginResponse(BaseModel):
     message: str
-    token: Token
+    result: Token
+
+class UserLogoutResponse(BaseModel):
+    message: str

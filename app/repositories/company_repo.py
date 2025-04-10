@@ -1,6 +1,7 @@
+import uuid
 from sqlmodel import Session, select
 from contextlib import AbstractContextManager
-from typing import Callable, Optional, Union
+from typing import Callable, List, Optional, Union
 from app.models.company_model import Company
 from app.repositories.base_repo import BaseRepository
 
@@ -9,7 +10,7 @@ class CompanyRepository(BaseRepository):
         self.session_factory = session_factory
         super().__init__(session_factory, Company)
 
-    def get_all_companies(self):
+    def get_all_companies(self) -> List[Company]:
         with self.session_factory() as session:
             statement = select(Company)
             result = session.exec(statement).all()
@@ -29,7 +30,7 @@ class CompanyRepository(BaseRepository):
 
             return data
         
-    def get_company_by_options(self, option: str, value) -> Optional[Company]:
+    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Company]:
         if option not in ["id", "company_name"]:
             raise ValueError("Invalid option")
 
@@ -73,7 +74,7 @@ class CompanyRepository(BaseRepository):
             session.expunge_all()
             return result
         
-    def delete_company(self, id: str):
+    def delete_company(self, id: str) -> bool:
         with self.session_factory() as session:
             statement = select(Company).where(Company.id == id)
             result = session.exec(statement).one()
