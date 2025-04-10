@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 class ModelBaseInfo(BaseModel):
-    id: int
+    id: str
 
 class FindBase(BaseModel):
     ordering: Optional[str] = Field(default=None, description="Field to order by")

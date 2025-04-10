@@ -1,10 +1,9 @@
 import uuid
-from fastapi import APIRouter, Depends, Query,status
+from fastapi import APIRouter, Depends, Query
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
-from app.schema.user_schema import FindUserByOptionsResult, AddPersonalInfoResult
 from app.services.user_service import UserService, UserDict
 
 router = APIRouter(prefix="/users", tags=["user"])
@@ -69,9 +68,9 @@ def get_user_by_company(
         "data": user,
     }
 
-@router.get("/me", response_model=FindUserByOptionsResult, response_model_exclude_none=True)
+@router.get("/me")
 @inject
-def get_user_by_options(
+def get_current_user(
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: UserDict = Depends(get_current_user)
 ):
@@ -83,7 +82,7 @@ def get_user_by_options(
         "message": "User retrieved successfully"
     }
 
-@router.post("/me/profile", status_code=status.HTTP_201_CREATED, response_model=AddPersonalInfoResult, response_model_exclude_none=True)
+@router.post("/me/profile")
 @inject
 def attach_user_profile(
     profile_info,

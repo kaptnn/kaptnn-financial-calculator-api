@@ -1,15 +1,18 @@
 from datetime import datetime
-from typing import Union, TypedDict, Optional
+from typing import TypedDict, Optional
+import uuid
 from fastapi import HTTPException
 from app.core.exceptions import InternalServerError
 from app.models.company_model import Company
-from app.models.profile_model import Profile 
 from app.repositories.company_repo import CompanyRepository 
 from app.services.base_service import BaseService
 
 class CompanyDict(TypedDict):
-    id: str
+    id: uuid.UUID
     company_name: str
+    year_of_assignment: int
+    start_audit_period: datetime 
+    end_audit_period: datetime
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
@@ -41,7 +44,7 @@ class CompanyService(BaseService):
             "total_pages": total_pages,
         }
 
-    def get_company_by_options(self, option: str, value: Union[str, str]) -> CompanyDict:
+    def get_company_by_options(self, option: str, value) -> CompanyDict:
         company: Optional[Company] = self.company_repository.get_company_by_options(option, value) or (None, None)
 
         if not company:
@@ -50,6 +53,9 @@ class CompanyService(BaseService):
         return CompanyDict(
             id=company.id,
             company_name=company.company_name,
+            year_of_assignment=company.year_of_assignment,
+            start_audit_period=company.start_audit_period,
+            end_audit_period=company.end_audit_period,
             created_at=company.created_at,
             updated_at=company.updated_at,
         )
@@ -66,7 +72,14 @@ class CompanyService(BaseService):
             updated_at=new_company.updated_at,
         )
 
+        print(f"    INFO : {result.id}, Company Created Successfully!")
+
+        new_one_drive = False
         # It should add new folder to the one drive
+        if not new_one_drive:
+            raise InternalServerError("Failed to create company. Please try again later")
+        
+        print(f"    INFO : One Drive for {result.id} Created Successfully!")
 
         return {"message": "Company successfully registered", "data": result }
 

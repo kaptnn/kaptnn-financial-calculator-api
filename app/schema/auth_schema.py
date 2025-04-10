@@ -1,16 +1,15 @@
-import uuid
 from pydantic import BaseModel
 
-class RegisterSchema(BaseModel):
+class UserRegisterRequest(BaseModel):
     name: str
     email: str
     company_id: str
     password: str
     
-class RegisterResult(BaseModel):
+class UserRegisterResponse(BaseModel):
     message: str
 
-class LoginSchema(BaseModel):
+class UserLoginRequest(BaseModel):
     email: str
     password: str
 
@@ -19,6 +18,6 @@ class Token(BaseModel):
     access_token: str
     refresh_token: str
 
-class LoginResult(BaseModel):
+class UserLoginResponse(BaseModel):
     message: str
     token: Token

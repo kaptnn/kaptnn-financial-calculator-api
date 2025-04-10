@@ -28,12 +28,16 @@ class AuthService(BaseService):
         if not new_user:
             raise InternalServerError("Failed to create user. Please try again later")
 
+        print(f"    INFO : {new_user.id}, User Account Created Successfully!")
+
         new_user_profile = self.user_repository.create_user_profile(Profile(
             user_id=new_user.id if new_user.id is not None else 0
         ))
 
         if not new_user_profile:
             raise InternalServerError("Failed to create user profile. Please try again later")
+
+        print(f"    INFO : {new_user.id} with {new_user_profile.id}, User Profile Created Successfully!")
 
         return {"message": "User successfully registered"}
 
@@ -45,11 +49,17 @@ class AuthService(BaseService):
 
         user = result[0]
 
+        print(f"    INFO : {user.id}, User with {credentials.email} Retrieved!")
+
         if not self.verify_password(credentials.password, user.password):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
+        print(f"    INFO : {user.id} Credentials Verified!")
+        
         access_token = security.create_access_token(data={"sub": str(user.id)})
         refresh_token = security.create_refresh_token(data={"sub": str(user.id)})
+
+        print(f"    INFO : {user.id}, Access Token & Refresh Token Created Successfully!")
 
         response = JSONResponse(
             content={
@@ -62,6 +72,8 @@ class AuthService(BaseService):
         
         response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="none")
         response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="none")
+
+        print(f"    INFO : {user.id}, Access Token & Refresh Token Already Set to the Site!")
         
         return response
 
@@ -69,7 +81,13 @@ class AuthService(BaseService):
         response = JSONResponse(content={"message": "Logged out"})
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
+
+        print(f"    INFO : Access Token & Refresh Token Deleted, Sign Out Success!")
+
         return response
+    
+    def create_new_access_token_service(self, refresh_token):
+        return security.create_new_access_token(refresh_token)
     
     def forgot_password(self):
         pass

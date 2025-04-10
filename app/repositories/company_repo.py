@@ -29,7 +29,7 @@ class CompanyRepository(BaseRepository):
 
             return data
         
-    def get_company_by_options(self, option: str, value: Union[str, str]) -> Optional[Company]:
+    def get_company_by_options(self, option: str, value) -> Optional[Company]:
         if option not in ["id", "company_name"]:
             raise ValueError("Invalid option")
 

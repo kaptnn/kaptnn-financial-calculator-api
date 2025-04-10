@@ -30,3 +30,11 @@ def sign_out(
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
     return service.sign_out()
+
+@router.post("/token/refresh")
+@inject
+def create_new_access_token(
+    refresh_token: str,
+    service: AuthService = Depends(Provide[Container.auth_service]),
+):
+    return service.create_new_access_token_service(refresh_token)

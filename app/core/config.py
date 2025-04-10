@@ -70,11 +70,23 @@ class Configs(BaseSettings):
     PAGE_SIZE: int = 20
     ORDERING: str = "-id"
 
-    class Config:
-        case_sensitive = True
-
 class TestConfigs(Configs):
     ENV: str = "testing"
 
-configs: Configs = Configs() if Configs().ENV != "testing" else TestConfigs()
+class LocalConfig(Configs):
+    ...
+
+class ProductionConfig(Configs):
+    DEBUG: bool = False
+
+def get_config():
+    env = os.getenv('ENV', 'development')
+    config_type = {
+        'test': TestConfigs(),
+        'development': LocalConfig(),
+        'prod': ProductionConfig(),
+    }
+    return config_type[env]
+
+configs: Configs = get_config()
 

@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, Depends, Query
 from dependency_injector.wiring import Provide
 from app.core.container import Container
@@ -32,7 +33,7 @@ def get_all_companies(
 @router.get("/company/id/{id}")
 @inject
 def get_company_by_id(
-    id: str,
+    id: uuid.UUID,
     service: CompanyService = Depends(Provide[Container.company_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
