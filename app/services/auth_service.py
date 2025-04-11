@@ -4,7 +4,6 @@ import base64
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from app.core import security
-from app.models.profile_model import Profile
 from app.repositories.user_repo import UserRepository
 from app.schema.auth_schema import UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
 from app.core.exceptions import DuplicatedError, InternalServerError
@@ -27,16 +26,15 @@ class AuthService(BaseService):
         if not new_user:
             raise InternalServerError("Failed to create user. Please try again later")
 
-        print(f"    INFO : {new_user.id}, User Account Created Successfully!")
-
-        new_user_profile = self.user_repository.create_user_profile(Profile(
-            user_id=new_user.id if new_user.id is not None else 0
-        ))
+        new_user_profile = self.user_repository.create_user_profile(user_id=new_user.id)
 
         if not new_user_profile:
-            raise InternalServerError("Failed to create user profile. Please try again later")
+            existing_user = self.user_repository.get_user_by_options("id", new_user.id)
+            if not existing_user:
+                raise HTTPException(status_code=404, detail="User not found")
 
-        print(f"    INFO : {new_user.id} with {new_user_profile.id}, User Profile Created Successfully!")
+            self.user_repository.delete_user(new_user.id)
+            raise InternalServerError("Failed to create user profile. Please try again later")
 
         return {"message": "User successfully registered"}
 
@@ -48,17 +46,11 @@ class AuthService(BaseService):
 
         user = result[0]
 
-        print(f"    INFO : {user.id}, User with {credentials.email} Retrieved!")
-
         if not self.verify_password(credentials.password, user.password):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        print(f"    INFO : {user.id} Credentials Verified!")
-        
         access_token = security.create_access_token(data={"sub": str(user.id)})
         refresh_token = security.create_refresh_token(data={"sub": str(user.id)})
-
-        print(f"    INFO : {user.id}, Access Token & Refresh Token Created Successfully!")
 
         response = JSONResponse(
             content={
@@ -72,8 +64,6 @@ class AuthService(BaseService):
         
         response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="none")
         response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="none")
-
-        print(f"    INFO : {user.id}, Access Token & Refresh Token Already Set to the Site!")
         
         return response
 
@@ -81,8 +71,6 @@ class AuthService(BaseService):
         response = JSONResponse(content={"message": "Logged out"})
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
-
-        print(f"    INFO : Access Token & Refresh Token Deleted, Sign Out Success!")
 
         return response
     

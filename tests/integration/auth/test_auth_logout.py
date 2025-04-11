@@ -1,5 +1,3 @@
-import pytest
-
 def test_auth_logout(client):
     login_payload = {
         "email": "usertest1@gmail.com",
@@ -9,16 +7,17 @@ def test_auth_logout(client):
     login_response = client.post("/api/v1/auth/login", json=login_payload)
     assert login_response.status_code == 200, "Login failed before logout test."
 
-    assert "access_token" in login_response.cookies
-    assert "refresh_token" in login_response.cookies
+    access_token = login_response.cookies["access_token"]
+    refresh_token = login_response.cookies["refresh_token"]
 
-    client.cookies.set("access_token", login_response.cookies["access_token"])
-    client.cookies.set("refresh_token", login_response.cookies["refresh_token"])
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
 
-    logout_response = client.post("/api/v1/auth/logout")
-    data = logout_response.json()
+    logout_response = client.post("/api/v1/auth/logout", headers=headers)
 
     assert logout_response.status_code == 200
+    data = logout_response.json()
     assert "message" in data
     assert data["message"].lower() == "logged out"
 

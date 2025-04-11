@@ -1,12 +1,12 @@
-from typing import List, Optional
 import uuid
+from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime
 from app.schema.base_schema import ModelBaseInfo
 from app.models.profile_model import Membership, Role
 from app.utils.schema import AllOptional
 
-class Profile(ModelBaseInfo):
+class Profile(ModelBaseInfo, metaclass=AllOptional):
     user_id: str
     role: Role
     membership: Membership

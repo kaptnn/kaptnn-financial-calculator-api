@@ -1,8 +1,9 @@
+import uuid
 from typing import Optional
 from pydantic import BaseModel, Field
 
 class ModelBaseInfo(BaseModel):
-    id: str
+    id: uuid.UUID
 
 class FindBase(BaseModel):
     ordering: Optional[str] = Field(default=None, description="Field to order by")

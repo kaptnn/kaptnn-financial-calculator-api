@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
+from app.core.dependencies import get_current_user
 from app.core.middleware import inject
 from app.schema.auth_schema import UserRegisterRequest, UserRegisterResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse
+from app.schema.user_schema import User
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -28,10 +30,11 @@ def sign_in(
 @inject
 def sign_out(
     service: AuthService = Depends(Provide[Container.auth_service]),
+    current_user: User = Depends(get_current_user) #Middleware
 ):
     return service.sign_out()
 
-@router.post("/token/refresh")
+@router.post("/token/refresh", status_code=status.HTTP_200_OK)
 @inject
 def create_new_access_token(
     refresh_token: str,

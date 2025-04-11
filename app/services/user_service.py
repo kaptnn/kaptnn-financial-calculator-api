@@ -111,11 +111,11 @@ class UserService(BaseService):
         return profile
     
     def delete_user(self, user_id: str) -> DeleteUserResponse:
-        existing_user = self.user_repository.delete_user("id", user_id)
+        existing_user = self.user_repository.get_user_by_options("id", user_id)
         if not existing_user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        success = self.company_repository.delete_company(user_id)
+        success = self.user_repository.delete_user(user_id)
         if not success:
             raise InternalServerError("Failed to delete company. Please try again later")
 

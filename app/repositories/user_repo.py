@@ -68,8 +68,10 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return user
         
-    def create_user_profile(self, profile: Profile) -> Profile:
+    def create_user_profile(self, user_id: str) -> Profile:
         with self.session_factory() as session:
+            profile = Profile(user_id=user_id, id=None, created_at=None, updated_at=None)
+
             session.add(profile)
             session.commit()
             session.refresh(profile)
