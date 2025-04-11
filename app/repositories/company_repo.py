@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from sqlmodel import Session, select
 from contextlib import AbstractContextManager
 from typing import Callable, List, Optional, Union
@@ -44,9 +45,9 @@ class CompanyRepository(BaseRepository):
             session.expunge_all()
             return result
         
-    def create_company(self, company_name: str) -> Company:
+    def create_company(self, company_name: str, year_of_assignment: int, start_audit_period: datetime, end_audit_period=datetime) -> Company:
         with self.session_factory() as session:
-            company = Company(id=None, company_name=company_name, created_at=None, updated_at=None)
+            company = Company(company_name=company_name, year_of_assignment=year_of_assignment, start_audit_period=start_audit_period, end_audit_period=end_audit_period, id=None, created_at=None, updated_at=None)
 
             session.add(company)
             session.commit()

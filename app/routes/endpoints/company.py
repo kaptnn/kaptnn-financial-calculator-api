@@ -10,7 +10,7 @@ from app.services.user_service import UserDict
 
 router = APIRouter(prefix="/companies", tags=["company"])
 
-@router.get("/", response_model=FindAllCompaniesResponse, status_code=status.HTTP_200_OK)
+@router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 @inject
 def get_all_companies(
     page: int = Query(1, ge=1, description="Page number"),
@@ -22,7 +22,7 @@ def get_all_companies(
     companies = service.get_companies(page=page, limit=limit, sort=sort, order=order)
     return {
         "message": "Companies retrieved successfully",
-        "result": companies["results"],
+        "result": companies["result"],
         "pagination": {
             "current_page": page,
             "total_pages": companies["total_pages"],
@@ -40,7 +40,7 @@ def get_company_by_id(
     company = service.get_company_by_options(option="id", value=id)
     return {
         "message": "Company retrieved successfully",
-        "data": company,
+        "result": company,
     }
 
 @router.get("/company/email/{email}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
@@ -53,7 +53,7 @@ def get_company_by_email(
     company = service.get_company_by_options(option="email", value=email)
     return {
         "message": "Company retrieved successfully",
-        "data": company,
+        "result": company,
     }
 
 @router.post("/", response_model=CreateCompanyResponse, status_code=status.HTTP_201_CREATED)
@@ -65,7 +65,7 @@ def create_company(
     company = service.create_company(company.company_name)
     return {
         "message": "Company successfully registered",
-        "data": company,
+        "result": company,
     }
 
 @router.put("/company/id/{id}", response_model=UpdateCompanyResponse, status_code=status.HTTP_200_OK)
@@ -78,7 +78,7 @@ def update_company(
     company = service.update_company(id, company)
     return {
         "message": "Company updated successfully",
-        "data": company,
+        "result": company,
     }
 
 @router.delete("/company/id/{id}", response_model=DeleteCompanyResponse, status_code=status.HTTP_200_OK)

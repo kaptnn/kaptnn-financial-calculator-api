@@ -1,10 +1,10 @@
+import uuid
 from datetime import datetime
 from typing import TypedDict, Optional, Union
-import uuid
 from fastapi import HTTPException
 from app.core.exceptions import InternalServerError
-from app.models.company_model import Company
 from app.repositories.company_repo import CompanyRepository 
+from app.schema.company_schema import CreateCompanyRequest, CreateCompanyResponse, Company, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse, FindCompanyByOptionsResponse
 from app.services.base_service import BaseService
 
 class CompanyDict(TypedDict):
@@ -21,11 +21,11 @@ class CompanyService(BaseService):
         self.company_repository = company_repository
         super().__init__(company_repository)
 
-    def get_companies(self, page: int, limit: int, sort: str, order: str):
+    def get_companies(self, page: int, limit: int, sort: str, order: str) -> dict:
         companies = self.company_repository.get_all_companies()
 
         if not companies:
-            return {"results": [], "total_items": 0, "total_pages": 0}
+            return {"result": [], "total_items": 0, "total_pages": 0}
 
         if sort not in companies[0]:
             raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort}")
@@ -39,13 +39,13 @@ class CompanyService(BaseService):
         paginated_companies = companies_sorted[offset : offset + limit]
 
         return {
-            "results": paginated_companies,
+            "result": paginated_companies,
             "total_items": total_items,
             "total_pages": total_pages,
         }
 
-    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> CompanyDict:
-        company: Optional[Company] = self.company_repository.get_company_by_options(option, value) or (None, None)
+    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> FindCompanyByOptionsResponse:
+        company = self.company_repository.get_company_by_options(option, value) or (None, None)
 
         if not company:
             raise HTTPException(status_code=404, detail="Company not found")
@@ -60,50 +60,51 @@ class CompanyService(BaseService):
             updated_at=company.updated_at,
         )
 
-    def create_company(self, company_name: str) -> CompanyDict:
-        new_company = self.company_repository.create_company(company_name)
+    def create_company(self, company: CreateCompanyRequest) -> CreateCompanyResponse:
+        new_company = self.company_repository.create_company(company_name=company.company_name, year_of_assignment=company.year_of_assignment, start_audit_period=company.start_audit_period, end_audit_period=company.end_audit_period)
 
         if not new_company:
             raise InternalServerError("Failed to create company. Please try again later")
 
-        result = CompanyDict(id=new_company.id,
+        result = Company(
+            id=new_company.id,
             company_name=new_company.company_name,
+            year_of_assignment=new_company.year_of_assignment, 
+            start_audit_period=new_company.start_audit_period, 
+            end_audit_period=new_company.end_audit_period,
             created_at=new_company.created_at,
             updated_at=new_company.updated_at,
         )
 
-        print(f"    INFO : {result.id}, Company Created Successfully!")
-
-        new_one_drive = False
         # It should add new folder to the one drive
-        if not new_one_drive:
-            raise InternalServerError("Failed to create company. Please try again later")
-        
-        print(f"    INFO : One Drive for {result.id} Created Successfully!")
 
-        return {"message": "Company successfully registered", "data": result }
+        return {"message": "Company successfully registered", "result": result }
 
-    def update_company(self, id: str, company: dict) -> CompanyDict:
+    def update_company(self, company_id: str, company: UpdateCompanyRequest) -> UpdateCompanyResponse:
         existing_company = self.company_repository.get_company_by_options("id", id)
         
         if not existing_company:
             raise HTTPException(status_code=404, detail="Company not found")
 
-        updated_company: Company = self.company_repository.update_company(id, company)
+        updated_company = self.company_repository.update_company(company_id, company)
 
-        return CompanyDict(
+        return Company(
             id=updated_company.id,
             company_name=updated_company.company_name,
+            year_of_assignment=updated_company.year_of_assignment, 
+            start_audit_period=updated_company.start_audit_period, 
+            end_audit_period=updated_company.end_audit_period,
             created_at=updated_company.created_at,
             updated_at=updated_company.updated_at,
         )
 
-    def delete_company(self, id: str):
-        existing_company = self.company_repository.get_company_by_options("id", id)
+
+    def delete_company(self, company_id: str) -> DeleteCompanyResponse:
+        existing_company = self.company_repository.get_company_by_options("id", company_id)
         if not existing_company:
             raise HTTPException(status_code=404, detail="User not found")
 
-        success = self.company_repository.delete_company(id)
+        success = self.company_repository.delete_company(company_id)
         if not success:
             raise InternalServerError("Failed to delete company. Please try again later")
         
