@@ -1,28 +1,28 @@
 import uuid
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
-from app.schema.company_schema import CreateCompanySchema
+from app.schema.company_schema import FindAllCompaniesResponse, FindCompanyByOptionsRequest, FindCompanyByOptionsResponse, CreateCompanyRequest, CreateCompanyResponse, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse
 from app.services.company_service import CompanyService
 from app.services.user_service import UserDict
 
 router = APIRouter(prefix="/companies", tags=["company"])
 
-@router.get("/")
+@router.get("/", response_model=FindAllCompaniesResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_all_companies(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(5, ge=1, le=100, description="Number of users per page"),
     sort: str = Query("created_at", description="Field to sort by"),
-    order: str = Query("asc", regex="^(asc|desc)$", description="Sort order (asc or desc)"),
+    order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order (asc or desc)"),
     service: CompanyService = Depends(Provide[Container.company_service]),
 ):
     companies = service.get_companies(page=page, limit=limit, sort=sort, order=order)
     return {
         "message": "Companies retrieved successfully",
-        "data": companies["results"],
+        "result": companies["results"],
         "pagination": {
             "current_page": page,
             "total_pages": companies["total_pages"],
@@ -30,7 +30,7 @@ def get_all_companies(
         },
     }
 
-@router.get("/company/id/{id}")
+@router.get("/company/id/{id}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_company_by_id(
     id: uuid.UUID,
@@ -43,7 +43,7 @@ def get_company_by_id(
         "data": company,
     }
 
-@router.get("/company/email/{email}")
+@router.get("/company/email/{email}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_company_by_email(
     email: str,
@@ -56,10 +56,10 @@ def get_company_by_email(
         "data": company,
     }
 
-@router.post("/")
+@router.post("/", response_model=CreateCompanyResponse, status_code=status.HTTP_201_CREATED)
 @inject
 def create_company(
-    company: CreateCompanySchema,
+    company: CreateCompanyRequest,
     service: CompanyService = Depends(Provide[Container.company_service]),
 ):
     company = service.create_company(company.company_name)
@@ -68,10 +68,10 @@ def create_company(
         "data": company,
     }
 
-@router.put("/company/id/{id}")
+@router.put("/company/id/{id}", response_model=UpdateCompanyResponse, status_code=status.HTTP_200_OK)
 @inject
 def update_company(
-    company: dict,
+    company: UpdateCompanyRequest,
     service: CompanyService = Depends(Provide[Container.company_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
@@ -81,7 +81,7 @@ def update_company(
         "data": company,
     }
 
-@router.delete("/company/id/{id}")
+@router.delete("/company/id/{id}", response_model=DeleteCompanyResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_company(
     service: CompanyService = Depends(Provide[Container.company_service]),

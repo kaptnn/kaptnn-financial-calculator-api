@@ -50,6 +50,5 @@ websockets==14.1
 loguru==0.7.3
 alembic==1.14.0
 fastapi-mail==1.4.2
-pydantic_settings
-msgraph-sdk==1.22.0
-msal==1.32.0
+pydantic_settings==2.8.1
+fastapi-msal==2.1.6

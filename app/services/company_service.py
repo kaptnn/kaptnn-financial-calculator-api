@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypedDict, Optional
+from typing import TypedDict, Optional, Union
 import uuid
 from fastapi import HTTPException
 from app.core.exceptions import InternalServerError
@@ -8,7 +8,7 @@ from app.repositories.company_repo import CompanyRepository
 from app.services.base_service import BaseService
 
 class CompanyDict(TypedDict):
-    id: uuid.UUID
+    id: str
     company_name: str
     year_of_assignment: int
     start_audit_period: datetime 
@@ -44,7 +44,7 @@ class CompanyService(BaseService):
             "total_pages": total_pages,
         }
 
-    def get_company_by_options(self, option: str, value) -> CompanyDict:
+    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> CompanyDict:
         company: Optional[Company] = self.company_repository.get_company_by_options(option, value) or (None, None)
 
         if not company:
