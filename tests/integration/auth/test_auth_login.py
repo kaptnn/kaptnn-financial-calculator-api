@@ -5,6 +5,7 @@ import pytest
     ("usertest1@gmail.com", "WrongPassword123!", 401, False),
     ("bocilnotexist@gmail.com", "Password123!", 401, False),
 ])
+
 def test_auth_login_usecases(client, email, password, expected_status, expect_tokens):
     payload = {"email": email, "password": password}
     response = client.post("/api/v1/auth/login", json=payload)

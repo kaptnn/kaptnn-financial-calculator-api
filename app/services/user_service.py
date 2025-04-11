@@ -45,7 +45,7 @@ class UserService(BaseService):
         paginated_users = users[offset : offset + limit]
 
         return {
-            "results": paginated_users,
+            "result": paginated_users,
             "total_items": total_items,
             "total_pages": total_pages,
         }

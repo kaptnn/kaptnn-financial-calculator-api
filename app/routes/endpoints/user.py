@@ -4,8 +4,8 @@ from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
-from app.schema.user_schema import DeleteUserResponse, FindUserByOptionsResponse, UpdateUserProfileResponse
-from app.services.user_service import UserService, UserDict
+from app.schema.user_schema import DeleteUserResponse, FindUserByOptionsResponse, UpdateUserProfileResponse, User
+from app.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["user"])
 
@@ -17,12 +17,12 @@ def get_all_users(
     sort: str = Query("created_at", description="Field to sort by"),
     order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order (asc or desc)"),
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: UserDict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    users = service.get_users(page=page, limit=limit, sort=sort, order=order)
+    users = service.get_all_users(page=page, limit=limit, sort=sort, order=order)
     return {
         "message": "Users retrieved successfully",
-        "data": users["results"],
+        "result": users["result"],
         "pagination": {
             "current_page": page,
             "total_pages": users["total_pages"],
@@ -33,14 +33,14 @@ def get_all_users(
 @router.get("/user/id/{id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_user_by_id(
-    id: str,
+    id: uuid.UUID,
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     user = service.get_user_by_options(option="id", value=id)
     return {
         "message": "User retrieved successfully",
-        "data": user,
+        "result": user,
     }
 
 @router.get("/user/email/{email}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
@@ -48,12 +48,12 @@ def get_user_by_id(
 def get_user_by_email(
     email: str,
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     user = service.get_user_by_options(option="email", value=email)
     return {
         "message": "User retrieved successfully",
-        "data": user,
+        "result": user,
     }
 
 @router.get("/user/company/{company_id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
@@ -61,26 +61,25 @@ def get_user_by_email(
 def get_user_by_company(
     company_id: uuid.UUID,
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     user = service.get_user_by_options(option="company_id", value=company_id)
     return {
         "message": "User retrieved successfully",
-        "data": user,
+        "result": user,
     }
 
 @router.get("/me", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_current_user(
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: UserDict = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     user = service.get_user_by_options("id", current_user["id"])
-    user["password"] = None
 
     return {
-        "data": user,
-        "message": "User retrieved successfully"
+        "message": "User retrieved successfully",
+        "result": user,
     }
 
 @router.post("/me/profile", response_model=UpdateUserProfileResponse, status_code=status.HTTP_201_CREATED)
@@ -88,18 +87,22 @@ def get_current_user(
 def attach_user_profile(
     profile_info,
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     user_id = current_user["id"]
     profile = service.attach_user_profile(user_id, profile_info)
     simplified_profile = profile.model_dump(exclude_none=True)
 
     return {
-        "data": simplified_profile,
-        "message": "Profile attached successfully"
+        "message": "Profile attached successfully",
+        "result": simplified_profile,
     }
 
 @router.delete("/user/id/{id}", response_model=DeleteUserResponse, status_code=status.HTTP_200_OK)
 @inject
-def delete_user():
-    pass
+def delete_user(
+    service: UserService = Depends(Provide[Container.user_service]),
+    current_user: User = Depends(get_current_user)
+):
+    return service.delete_user(id)
+    

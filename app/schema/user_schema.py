@@ -34,7 +34,7 @@ class FindUserByOptionsRequest(BaseModel):
 
 class FindUserByOptionsResponse(BaseModel):
     message: str
-    result: Optional[User]
+    result: dict | list
 
 class UpdateUserProfileRequest(BaseModel):
     role: Optional[Role]
