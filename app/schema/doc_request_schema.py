@@ -36,6 +36,7 @@ class CreateDocumentReqRequest(BaseModel):
     target_user_id: str
     category_id: str
     due_date: datetime
+    updated_date: Optional[datetime]
 
 class CreateDocumentReqResponse(BaseModel):
     message: str

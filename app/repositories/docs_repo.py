@@ -1,7 +1,7 @@
 import uuid
 from sqlmodel import Session, select
 from contextlib import AbstractContextManager
-from typing import Callable, Literal, Optional, Union
+from typing import Callable, List, Literal, Optional, Union
 from app.models.doc_model import Document
 from app.repositories.base_repo import BaseRepository
 
@@ -10,7 +10,7 @@ class DocsRepository(BaseRepository):
         self.session_factory = session_factory
         super().__init__(session_factory, Document)
 
-    def get_all_docs(self) -> list[dict]:
+    def get_all_docs(self) -> List[Document]:
         with self.session_factory() as session:
             statement = select(Document)
             result = session.exec(statement).all()
@@ -50,14 +50,14 @@ class DocsRepository(BaseRepository):
             return result
         
     def create_docs(
-            self, 
-            uploader: Union[str, uuid.UUID],
-            document_name: str,
-            company: Union[str, uuid.UUID],
-            request_id: Optional[Union[str, uuid.UUID]] = None,
-            document_path: Optional[str] = None,
-            file_size: Optional[int] = None,
-            mime_type: Optional[str] = None,
+        self, 
+        uploader: Union[str, uuid.UUID],
+        document_name: str,
+        company: Union[str, uuid.UUID],
+        request_id: Optional[Union[str, uuid.UUID]] = None,
+        document_path: Optional[str] = None,
+        file_size: Optional[int] = None,
+        mime_type: Optional[str] = None,
     ) -> Document:
         uploader_uuid = uuid.UUID(uploader) if isinstance(uploader, str) else uploader
         company_uuid = uuid.UUID(company) if isinstance(company, str) else company
@@ -84,7 +84,7 @@ class DocsRepository(BaseRepository):
             session.expunge_all()
             return document
         
-    def update_docs(self, id: Union[str, uuid.UUID], document: dict) -> Optional[Document]:
+    def update_docs(self, id: Union[str, uuid.UUID], document: Document) -> Optional[Document]:
         doc_id = uuid.UUID(id) if isinstance(id, str) else id
 
         with self.session_factory() as session:

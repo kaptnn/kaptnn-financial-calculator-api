@@ -107,7 +107,7 @@ class CompanyService(BaseService):
 
 
     def update_company(self, company_id: str, company: UpdateCompanyRequest) -> UpdateCompanyResponse:
-        existing_company = self.company_repository.get_company_by_options("id", id)
+        existing_company = self.company_repository.get_company_by_options("id", company_id)
         
         if not existing_company:
             raise HTTPException(status_code=404, detail="Company not found")

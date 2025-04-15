@@ -4,7 +4,7 @@ from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
-from app.schema.company_schema import FindAllCompaniesResponse, FindCompanyByOptionsRequest, FindCompanyByOptionsResponse, CreateCompanyRequest, CreateCompanyResponse, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse
+from app.schema.company_schema import FindCompanyByOptionsResponse, CreateCompanyRequest, CreateCompanyResponse, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse
 from app.services.company_service import CompanyService
 from app.services.user_service import UserDict
 
@@ -37,10 +37,10 @@ def get_company_by_id(
     service: CompanyService = Depends(Provide[Container.company_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    company = service.get_company_by_options(option="id", value=id)
+    result = service.get_company_by_options(option="id", value=id)
     return {
         "message": "Company retrieved successfully",
-        "result": company,
+        "result": result,
     }
 
 @router.get("/company/name/{name}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
@@ -50,10 +50,10 @@ def get_company_by_email(
     service: CompanyService = Depends(Provide[Container.company_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    company = service.get_company_by_options(option="company_name", value=name)
+    result = service.get_company_by_options(option="company_name", value=name)
     return {
         "message": "Company retrieved successfully",
-        "result": company,
+        "result": result,
     }
 
 @router.post("/", response_model=CreateCompanyResponse, status_code=status.HTTP_201_CREATED)
@@ -72,10 +72,10 @@ def update_company(
     service: CompanyService = Depends(Provide[Container.company_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    company = service.update_company(id, company)
+    result = service.update_company(id, company)
     return {
         "message": "Company updated successfully",
-        "result": company,
+        "result": result,
     }
 
 @router.delete("/company/id/{id}", response_model=DeleteCompanyResponse, status_code=status.HTTP_200_OK)

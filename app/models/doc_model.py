@@ -8,7 +8,6 @@ from app.models.base_model import BaseModel
 from app.models.company_model import Company
 from app.models.doc_request_model import DocumentRequest
 
-
 class Document(BaseModel, table=True):
     __tablename__ = "documents"
 
