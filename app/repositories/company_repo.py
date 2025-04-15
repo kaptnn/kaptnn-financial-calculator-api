@@ -5,7 +5,7 @@ from contextlib import AbstractContextManager
 from typing import Callable, List, Optional, Union
 from app.models.company_model import Company
 from app.repositories.base_repo import BaseRepository
-
+ 
 class CompanyRepository(BaseRepository):
     def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
         self.session_factory = session_factory
@@ -31,20 +31,24 @@ class CompanyRepository(BaseRepository):
 
             return data
         
-    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Company]:
+    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Union[List[Company], Company]]:
         if option not in ["id", "company_name"]:
             raise ValueError("Invalid option")
 
         with self.session_factory() as session:
             statement = select(Company).where(getattr(Company, option) == value)
-            result = session.exec(statement).one_or_none()
+            result = session.exec(statement).all()
 
             if result is None:
                 return None
-
+            
             session.expunge_all()
-            return result
-        
+
+            if option in ["id"]:
+                return result[0] if result else None
+            elif option == "company_name":
+                return result
+            
     def create_company(self, company_name: str, year_of_assignment: int, start_audit_period: datetime, end_audit_period=datetime) -> Company:
         with self.session_factory() as session:
             company = Company(company_name=company_name, year_of_assignment=year_of_assignment, start_audit_period=start_audit_period, end_audit_period=end_audit_period, id=None, created_at=None, updated_at=None)

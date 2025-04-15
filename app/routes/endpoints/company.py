@@ -19,7 +19,7 @@ def get_all_companies(
     order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order (asc or desc)"),
     service: CompanyService = Depends(Provide[Container.company_service]),
 ):
-    companies = service.get_companies(page=page, limit=limit, sort=sort, order=order)
+    companies = service.get_all_companies(page=page, limit=limit, sort=sort, order=order)
     return {
         "message": "Companies retrieved successfully",
         "result": companies["result"],
@@ -43,14 +43,14 @@ def get_company_by_id(
         "result": company,
     }
 
-@router.get("/company/email/{email}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
+@router.get("/company/name/{name}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_company_by_email(
-    email: str,
+    name: str,
     service: CompanyService = Depends(Provide[Container.company_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    company = service.get_company_by_options(option="email", value=email)
+    company = service.get_company_by_options(option="company_name", value=name)
     return {
         "message": "Company retrieved successfully",
         "result": company,
@@ -61,12 +61,9 @@ def get_company_by_email(
 def create_company(
     company: CreateCompanyRequest,
     service: CompanyService = Depends(Provide[Container.company_service]),
+    current_user: UserDict = Depends(get_current_user),
 ):
-    company = service.create_company(company.company_name)
-    return {
-        "message": "Company successfully registered",
-        "result": company,
-    }
+    return service.create_company(company)
 
 @router.put("/company/id/{id}", response_model=UpdateCompanyResponse, status_code=status.HTTP_200_OK)
 @inject

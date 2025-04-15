@@ -8,7 +8,7 @@ from sqlalchemy import text
             "User Test 2",
             "usertest2@gmail.com",
             "Password123!",
-            "1e0b4884-0c80-4f49-9942-18b4dd392e14",  # UUID with hyphens
+            "1e0b4884-0c80-4f49-9942-18b4dd392e14",
             201,
             "User successfully registered"
         ),

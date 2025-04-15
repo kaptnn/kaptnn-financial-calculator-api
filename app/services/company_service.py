@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import TypedDict, Optional, Union
+from typing import List, TypedDict, Optional, Union
 from fastapi import HTTPException
 from app.core.exceptions import InternalServerError
 from app.repositories.company_repo import CompanyRepository 
@@ -21,7 +21,7 @@ class CompanyService(BaseService):
         self.company_repository = company_repository
         super().__init__(company_repository)
 
-    def get_companies(self, page: int, limit: int, sort: str, order: str) -> dict:
+    def get_all_companies(self, page: int, limit: int, sort: str, order: str) -> dict:
         companies = self.company_repository.get_all_companies()
 
         if not companies:
@@ -44,30 +44,54 @@ class CompanyService(BaseService):
             "total_pages": total_pages,
         }
 
-    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> FindCompanyByOptionsResponse:
-        company = self.company_repository.get_company_by_options(option, value) or (None, None)
+    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Union[CompanyDict, List[CompanyDict]]]:
+        result = self.company_repository.get_company_by_options(option, value)
 
-        if not company:
+        if not result:
             raise HTTPException(status_code=404, detail="Company not found")
 
-        return CompanyDict(
-            id=company.id,
+        if option == "id":
+            company = result
+            company_dict = CompanyDict(
+                id=str(company.id),
+                company_name=company.company_name,
+                year_of_assignment=company.year_of_assignment,
+                start_audit_period=company.start_audit_period,
+                end_audit_period=company.end_audit_period,
+                created_at=company.created_at,
+                updated_at=company.updated_at,
+            )
+            return company_dict
+
+        elif option == "company_name":
+            companies = []
+            for company in result:
+                companies.append(
+                    CompanyDict(
+                        id=str(company.id), 
+                        company_name=company.company_name,
+                        year_of_assignment=company.year_of_assignment,
+                        start_audit_period=company.start_audit_period,
+                        end_audit_period=company.end_audit_period,
+                        created_at=company.created_at,
+                        updated_at=company.updated_at,
+                    )
+                )
+            return companies
+
+    def create_company(self, company: CreateCompanyRequest) -> CreateCompanyResponse:
+        new_company = self.company_repository.create_company(
             company_name=company.company_name,
             year_of_assignment=company.year_of_assignment,
             start_audit_period=company.start_audit_period,
-            end_audit_period=company.end_audit_period,
-            created_at=company.created_at,
-            updated_at=company.updated_at,
+            end_audit_period=company.end_audit_period
         )
-
-    def create_company(self, company: CreateCompanyRequest) -> CreateCompanyResponse:
-        new_company = self.company_repository.create_company(company_name=company.company_name, year_of_assignment=company.year_of_assignment, start_audit_period=company.start_audit_period, end_audit_period=company.end_audit_period)
 
         if not new_company:
             raise InternalServerError("Failed to create company. Please try again later")
 
         result = Company(
-            id=new_company.id,
+            id=str(new_company.id),
             company_name=new_company.company_name,
             year_of_assignment=new_company.year_of_assignment, 
             start_audit_period=new_company.start_audit_period, 
@@ -76,9 +100,11 @@ class CompanyService(BaseService):
             updated_at=new_company.updated_at,
         )
 
-        # It should add new folder to the one drive
+        return CreateCompanyResponse(
+            message="Company successfully registered", 
+            result=result.model_dump()
+        )
 
-        return {"message": "Company successfully registered", "result": result }
 
     def update_company(self, company_id: str, company: UpdateCompanyRequest) -> UpdateCompanyResponse:
         existing_company = self.company_repository.get_company_by_options("id", id)
