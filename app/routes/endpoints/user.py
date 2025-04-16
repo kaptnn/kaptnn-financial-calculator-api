@@ -82,6 +82,8 @@ def get_current_user(
         "result": user,
     }
 
+# UN-TESTED
+# CURRENT ERROR: I THINK IT SHOULD BE PUT OR PATCH
 @router.post("/me/profile", response_model=UpdateUserProfileResponse, status_code=status.HTTP_201_CREATED)
 @inject
 def attach_user_profile(
@@ -98,9 +100,12 @@ def attach_user_profile(
         "result": simplified_profile,
     }
 
+# UN-TESTED
+# CURRENT ERROR: NEED TO DELETE THE PROFILE FIRST
 @router.delete("/user/id/{id}", response_model=DeleteUserResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_user(
+    id: uuid.UUID,
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: User = Depends(get_current_user)
 ):

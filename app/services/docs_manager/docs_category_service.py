@@ -45,7 +45,7 @@ class DocsCategoryService(BaseService):
         result = self.docs_category_repository.get_docs_category_by_options(option, value)
 
         if not result:
-            raise HTTPException(status_code=404, detail="Company not found")
+            raise HTTPException(status_code=404, detail="Document category not found")
         
         return DocsCategoryDict(
             id=str(result.id),
@@ -58,7 +58,7 @@ class DocsCategoryService(BaseService):
         new_docs_category = self.docs_category_repository.create_docs_category(name=docs_category.name)
 
         if not new_docs_category:
-            raise InternalServerError("Failed to create company. Please try again later")
+            raise InternalServerError("Failed to create document category. Please try again later")
 
         result = DocumentCategory(
             id=str(new_docs_category.id),
@@ -68,7 +68,7 @@ class DocsCategoryService(BaseService):
         )
 
         return CreateDocumentCategoryResponse(
-            message="Company successfully registered", 
+            message="Document Category successfully registered", 
             result=result.model_dump()
         )
 
@@ -76,7 +76,7 @@ class DocsCategoryService(BaseService):
         existing_docs_category = self.docs_category_repository.get_docs_category_by_options("id", docs_category_id)
         
         if not existing_docs_category:
-            raise HTTPException(status_code=404, detail="Docs Category not found")
+            raise HTTPException(status_code=404, detail="Document Category not found")
 
         updated_docs_category = self.docs_category_repository.update_docs_category(docs_category_id, docs_category)
 
@@ -90,10 +90,10 @@ class DocsCategoryService(BaseService):
     def delete_docs_category(self, docs_category_id: str) -> DeleteDocumentCategoryResponse:
         existing_docs_category = self.docs_category_repository.get_docs_category_by_options("id", docs_category_id)
         if not existing_docs_category:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=404, detail="Document category not found")
 
         success = self.docs_category_repository.delete_docs_category(docs_category_id)
         if not success:
-            raise InternalServerError("Failed to delete company. Please try again later")
+            raise InternalServerError("Failed to delete document category. Please try again later")
         
-        return {"message": "Docs category deleted successfully"}
+        return {"message": "Document category deleted successfully"}

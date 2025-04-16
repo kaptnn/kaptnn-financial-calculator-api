@@ -20,10 +20,8 @@ class DocumentRequest(BaseModel, table=True):
     target_user_id: uuid.UUID = Field(foreign_key="users.id")
     category_id: uuid.UUID = Field(foreign_key="document_categories.id")
     
-    # Need Migration
-    request_title: str = Field()
-    request_desc: str = Field()
-
+    request_title: str = Field(nullable=False)
+    request_desc: str = Field(nullable=False)
     due_date: datetime = Field()
     upload_date: Optional[datetime] = Field(default=None)
     status: RequestStatus = Field(sa_column=Column(Enum(RequestStatus)), default=RequestStatus.pending)

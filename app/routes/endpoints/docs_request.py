@@ -51,7 +51,8 @@ def create_docs_request(
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    return service.create_docs_request(docs_request)
+    
+    return service.create_docs_request(current_user["id"], docs_request)
 
 @router.put("/id/{id}", response_model=UpdateDocumentReqResponse, status_code=status.HTTP_200_OK)
 @inject

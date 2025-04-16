@@ -19,6 +19,8 @@ class DocsRequestRepository(BaseRepository):
                 {
                     "id": docs_request.id,
                     "admin_id": docs_request.admin_id,
+                    "request_title": docs_request.request_title,
+                    "request_desc": docs_request.request_desc,
                     "target_user_id": docs_request.target_user_id,
                     "category_id": docs_request.category_id,
                     "due_date": docs_request.due_date,
@@ -57,11 +59,11 @@ class DocsRequestRepository(BaseRepository):
     def create_docs_request(
         self,
         admin,
+        request_title,
+        request_desc,
         target_user,
         category,
         due_date,
-        upload_date,
-        status,
     ) -> DocumentRequest:
         admin_uuid = uuid.UUID(admin) if isinstance(admin, str) else admin
         target_user_uuid = uuid.UUID(target_user) if isinstance(target_user, str) else target_user
@@ -69,14 +71,11 @@ class DocsRequestRepository(BaseRepository):
 
         document_request = DocumentRequest(
                 admin_id=admin_uuid,
+                request_title=request_title,
+                request_desc=request_desc,
                 target_user_id=target_user_uuid,
                 category_id=category_uuid,
                 due_date=due_date,
-                upload_date=upload_date,
-                status=status or None,
-                id=None,
-                created_at=None,
-                updated_at=None
             )
 
         with self.session_factory() as session:

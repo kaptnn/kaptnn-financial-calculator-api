@@ -5,7 +5,7 @@ from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
 from app.services.user_service import UserDict
-from app.schema.doc_category_schema import FindDocumentCategoryByOptionsRequest, FindDocumentCategoryByOptionsResponse, CreateDocumentCategoryRequest, CreateDocumentCategoryResponse, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse, DeleteDocumentCategoryResponse
+from app.schema.doc_category_schema import FindDocumentCategoryByOptionsResponse, CreateDocumentCategoryRequest, CreateDocumentCategoryResponse, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse, DeleteDocumentCategoryResponse
 from app.services.docs_manager.docs_category_service import DocsCategoryService
 
 router = APIRouter(prefix="/docs-category", tags=["docs categories"])

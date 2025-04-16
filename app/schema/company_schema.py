@@ -38,10 +38,7 @@ class CreateCompanyResponse(BaseModel):
     result: Company
 
 class UpdateCompanyRequest(BaseModel):
-    company_name: Optional[str]
-    year_of_assignment: Optional[int]
-    start_audit_period: Optional[datetime] 
-    end_audit_period: Optional[datetime]    
+    ...
 
 class UpdateCompanyResponse(BaseModel):
     message: str

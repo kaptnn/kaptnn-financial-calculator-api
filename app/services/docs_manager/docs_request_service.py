@@ -6,6 +6,7 @@ from app.core.exceptions import InternalServerError
 from app.models.doc_request_model import DocumentRequest
 from app.services.base_service import BaseService
 from app.repositories.docs_request_repo import DocsRequestRepository 
+from app.repositories.user_repo import UserRepository
 from app.schema.doc_request_schema import CreateDocumentReqRequest, CreateDocumentReqResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse, DocumentReq
 
 class DocumentRequestDict(TypedDict):
@@ -20,9 +21,11 @@ class DocumentRequestDict(TypedDict):
     updated_at: Optional[datetime]
 
 class DocsRequestService(BaseService):
-    def __init__(self, docs_req_repository: DocsRequestRepository):
+    def __init__(self, docs_req_repository: DocsRequestRepository, user_repository: UserRepository):
         self.docs_req_repository = docs_req_repository
+        self.user_repository = user_repository
         super().__init__(docs_req_repository)
+        super().__init__(user_repository)
 
     def get_all_docs_requests(self, page: int, limit: int, sort: str, order: str) -> dict:
         docs_reqs = self.docs_req_repository.get_all_docs_requests()
@@ -66,7 +69,32 @@ class DocsRequestService(BaseService):
         )
 
     def create_docs_request(self, admin_id: Union[str, uuid.UUID], docs_request: CreateDocumentReqRequest) -> CreateDocumentReqResponse:
-        new_docs_request = self.docs_req_repository.create_docs_request(admin=admin_id, target_user=docs_request.target_user_id, category=docs_request.category_id, due_date=docs_request.due_date, upload_date=docs_request.upload_date)
+        existing_user_row = self.user_repository.get_user_by_options("id", admin_id)
+        
+        if existing_user_row is None:
+            raise InternalServerError("User not found. Cannot create document request.")
+        
+        if hasattr(existing_user_row, "_mapping"):
+            existing_user = dict(existing_user_row._mapping)
+        elif isinstance(existing_user_row, (list, tuple)):
+            existing_user = existing_user_row[0] if existing_user_row else {}
+        else:
+            existing_user = existing_user_row
+
+        profile = existing_user.get("Profile")
+        user_role = profile.role if profile else None
+        
+        if user_role != "admin":
+            raise InternalServerError("User is not authorized to create document requests.")
+
+        new_docs_request = self.docs_req_repository.create_docs_request(
+            admin=admin_id,
+            request_title=docs_request.request_title,
+            request_desc=docs_request.request_desc,
+            target_user=docs_request.target_user_id,
+            category=docs_request.category_id,
+            due_date=docs_request.due_date,
+        )
 
         if not new_docs_request:
             raise InternalServerError("Failed to create document request. Please try again later")
@@ -84,7 +112,7 @@ class DocsRequestService(BaseService):
         )
 
         return CreateDocumentReqResponse(
-            message="Document request successfully registered", 
+            message="Document request successfully registered",
             result=result.model_dump()
         )
 

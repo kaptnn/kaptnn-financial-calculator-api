@@ -41,5 +41,5 @@ class Container(containers.DeclarativeContainer):
     auth_service = providers.Factory(AuthService, user_repository=user_repository)
     company_service = providers.Factory(CompanyService, company_repository=company_repository)
     docs_category_service = providers.Factory(DocsCategoryService, docs_category_repository=docs_category_repository)
-    docs_request_service = providers.Factory(DocsRequestService, docs_request_repository=docs_request_repository)
+    docs_request_service = providers.Factory(DocsRequestService, docs_req_repository=docs_request_repository, user_repository=user_repository)
     docs_service = providers.Factory(DocsService, docs_repository=docs_repository)

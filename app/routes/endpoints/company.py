@@ -65,6 +65,8 @@ def create_company(
 ):
     return service.create_company(company)
 
+# UN-TESTED
+# CURRENT ERROR: THE FIELD NOT OPTIONALLY SO ALL FIELD STILL REQUIRED
 @router.put("/company/id/{id}", response_model=UpdateCompanyResponse, status_code=status.HTTP_200_OK)
 @inject
 def update_company(
@@ -78,6 +80,9 @@ def update_company(
         "result": result,
     }
 
+# UN-TESTED
+# CURRENT ERROR: I THINK IT SHOULD BE NEED TO DELETE THE USER IN THE COMPANY
+#                ID SHOULD BE HEX OR UUID
 @router.delete("/company/id/{id}", response_model=DeleteCompanyResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_company(
