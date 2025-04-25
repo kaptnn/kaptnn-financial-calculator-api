@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.core.middleware import inject
 
-router = APIRouter(prefix="/docs", tags=["docs management"])
+router = APIRouter(prefix="/documents", tags=["Document Management"])
 
 @router.get("/")
 @inject

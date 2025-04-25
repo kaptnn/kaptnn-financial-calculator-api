@@ -8,7 +8,7 @@ from app.schema.company_schema import FindCompanyByOptionsResponse, CreateCompan
 from app.services.company_service import CompanyService
 from app.services.user_service import UserDict
 
-router = APIRouter(prefix="/companies", tags=["company"])
+router = APIRouter(prefix="/companies", tags=["Company"])
 
 @router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 @inject

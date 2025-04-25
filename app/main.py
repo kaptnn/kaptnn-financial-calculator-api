@@ -22,7 +22,7 @@ class App(FastAPI):
 
         register_middleware(self.app)
         
-        @self.app.get(f"{configs.API_PREFIX}/health", tags=["health"])
+        @self.app.get(f"{configs.API_PREFIX}/health", tags=["Health Check"])
         async def root() -> dict:
             return {"message": "Welcome to KAP TNN Calculator API"}
         

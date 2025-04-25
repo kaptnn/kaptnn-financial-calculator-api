@@ -5,7 +5,7 @@ from app.services.calculators.depreciation_calculator import PenyusutanCalculato
 from app.services.calculators.present_value_calculator import PresentValueServices
 from app.services.calculators.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
-router = APIRouter(prefix="/calculator", tags=["calculator"])
+router = APIRouter(prefix="/calculations", tags=["Calculator"])
 
 @router.post("/depreciation", status_code=status.HTTP_200_OK)
 def penyusutan(

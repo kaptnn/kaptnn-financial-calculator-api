@@ -7,7 +7,7 @@ from app.core.dependencies import get_current_user
 from app.schema.user_schema import DeleteUserResponse, FindUserByOptionsResponse, UpdateUserProfileResponse, User
 from app.services.user_service import UserService
 
-router = APIRouter(prefix="/users", tags=["user"])
+router = APIRouter(prefix="/users", tags=["User Management"])
 
 @router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 @inject

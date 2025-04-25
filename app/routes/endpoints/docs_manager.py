@@ -3,7 +3,7 @@ from app.services.docs_manager.docs_manager_service import OneDriveService
 from app.core.config import configs
 from app.utils.msgraph import AzureAuthService
 
-router = APIRouter(prefix="/docs-manager", tags=["document manager"])
+router = APIRouter(prefix="/document-managers", tags=["Document Manager"])
 
 @router.get("/auth/login")
 async def login():

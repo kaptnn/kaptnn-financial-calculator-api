@@ -8,7 +8,7 @@ from app.services.user_service import UserDict
 from app.schema.doc_category_schema import FindDocumentCategoryByOptionsResponse, CreateDocumentCategoryRequest, CreateDocumentCategoryResponse, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse, DeleteDocumentCategoryResponse
 from app.services.docs_manager.docs_category_service import DocsCategoryService
 
-router = APIRouter(prefix="/docs-category", tags=["docs categories"])
+router = APIRouter(prefix="/document-categories", tags=["Document Category"])
 
 @router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 @inject

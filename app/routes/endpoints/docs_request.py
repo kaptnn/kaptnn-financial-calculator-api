@@ -8,7 +8,7 @@ from app.services.user_service import UserDict
 from app.schema.doc_request_schema import FindDocumentReqByOptionsResponse, CreateDocumentReqRequest, CreateDocumentReqResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse
 from app.services.docs_manager.docs_request_service import DocsRequestService
 
-router = APIRouter(prefix="/docs-request", tags=["docs requests"])
+router = APIRouter(prefix="/document-requests", tags=["Document Request"])
 
 @router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 @inject

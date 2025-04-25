@@ -7,7 +7,7 @@ from app.schema.auth_schema import UserRegisterRequest, UserRegisterResponse, Us
 from app.schema.user_schema import User
 from app.services.auth_service import AuthService
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=UserRegisterResponse ,status_code=status.HTTP_201_CREATED)
 @inject
