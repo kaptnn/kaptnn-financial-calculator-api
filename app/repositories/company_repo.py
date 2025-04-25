@@ -5,7 +5,7 @@ from contextlib import AbstractContextManager
 from typing import Callable, List, Optional, Union
 from app.models.company_model import Company
 from app.repositories.base_repo import BaseRepository
- 
+
 class CompanyRepository(BaseRepository):
     def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
         self.session_factory = session_factory

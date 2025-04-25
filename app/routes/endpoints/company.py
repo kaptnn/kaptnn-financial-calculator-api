@@ -30,7 +30,7 @@ def get_all_companies(
         },
     }
 
-@router.get("/company/id/{id}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
+@router.get("/{company_id}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_company_by_id(
     id: uuid.UUID,
@@ -38,19 +38,6 @@ def get_company_by_id(
     current_user: UserDict = Depends(get_current_user),
 ):
     result = service.get_company_by_options(option="id", value=id)
-    return {
-        "message": "Company retrieved successfully",
-        "result": result,
-    }
-
-@router.get("/company/name/{name}", response_model=FindCompanyByOptionsResponse, status_code=status.HTTP_200_OK)
-@inject
-def get_company_by_email(
-    name: str,
-    service: CompanyService = Depends(Provide[Container.company_service]),
-    current_user: UserDict = Depends(get_current_user),
-):
-    result = service.get_company_by_options(option="company_name", value=name)
     return {
         "message": "Company retrieved successfully",
         "result": result,
@@ -67,7 +54,7 @@ def create_company(
 
 # UN-TESTED
 # CURRENT ERROR: THE FIELD NOT OPTIONALLY SO ALL FIELD STILL REQUIRED
-@router.put("/company/id/{id}", response_model=UpdateCompanyResponse, status_code=status.HTTP_200_OK)
+@router.put("/{company_id}", response_model=UpdateCompanyResponse, status_code=status.HTTP_200_OK)
 @inject
 def update_company(
     company: UpdateCompanyRequest,
@@ -83,7 +70,7 @@ def update_company(
 # UN-TESTED
 # CURRENT ERROR: I THINK IT SHOULD BE NEED TO DELETE THE USER IN THE COMPANY
 #                ID SHOULD BE HEX OR UUID
-@router.delete("/company/id/{id}", response_model=DeleteCompanyResponse, status_code=status.HTTP_200_OK)
+@router.delete("/{company_id}", response_model=DeleteCompanyResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_company(
     service: CompanyService = Depends(Provide[Container.company_service]),

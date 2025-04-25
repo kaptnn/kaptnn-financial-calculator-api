@@ -31,14 +31,14 @@ def get_all_docs_requests(
         },
     }
 
-@router.get("/id/{id}", response_model=FindDocumentReqByOptionsResponse, status_code=status.HTTP_200_OK)
+@router.get("/{docs_request_id}", response_model=FindDocumentReqByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_docs_request_by_id(
-    id: uuid.UUID,
+    docs_request_id: uuid.UUID,
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    result = service.get_docs_request_by_options(option="id", value=id)
+    result = service.get_docs_request_by_options(option="id", value=docs_request_id)
     return {
         "message": "Docs request retrieved successfully",
         "result": result,
@@ -54,7 +54,7 @@ def create_docs_request(
     
     return service.create_docs_request(current_user["id"], docs_request)
 
-@router.put("/id/{id}", response_model=UpdateDocumentReqResponse, status_code=status.HTTP_200_OK)
+@router.put("/{docs_request_id}", response_model=UpdateDocumentReqResponse, status_code=status.HTTP_200_OK)
 @inject
 def update_docs_request(
     docs_request: UpdateDocumentReqRequest,
@@ -67,10 +67,11 @@ def update_docs_request(
         "result": result,
     }
 
-@router.delete("/id/{id}", response_model=DeleteDocumentReqResponse, status_code=status.HTTP_200_OK)
+@router.delete("/{docs_request_id}", response_model=DeleteDocumentReqResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_docs_request(
+    docs_request_id: uuid.UUID,
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    return service.delete_docs_request(id)
+    return service.delete_docs_request(docs_request_id)

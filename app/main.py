@@ -1,9 +1,9 @@
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
 from app.core.config import configs
 from app.routes.routes import routers as v1_routers
 from app.utils.pattern import singleton
 from app.core.container import Container
+from app.core.middleware import register_middleware
 
 app = FastAPI()
 
@@ -14,22 +14,16 @@ class App(FastAPI):
             title="KAP TNN Calculator API",
             docs_url=f"{configs.API_PREFIX}/docs",
             redoc_url=f"{configs.API_PREFIX}/redoc",
-            version="1.1.0",
+            version="1.5.0",
         )
 
         self.container = Container()
         self.db = self.container.db()
 
-        self.app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"]
-        )
-
-        @self.app.get("/")
-        def root():
+        register_middleware(self.app)
+        
+        @self.app.get(f"{configs.API_PREFIX}/health", tags=["health"])
+        async def root() -> dict:
             return {"message": "Welcome to KAP TNN Calculator API"}
         
         self.app.include_router(v1_routers, prefix=configs.API_PREFIX)

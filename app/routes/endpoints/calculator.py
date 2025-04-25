@@ -7,46 +7,7 @@ from app.services.calculators.goal_seeking_weighted_average import GoalSeekingWe
 
 router = APIRouter(prefix="/calculator", tags=["calculator"])
 
-@router.get("/addition", status_code=status.HTTP_200_OK)
-def addition(
-    num1: float = Query(..., description="First number"), 
-    num2: float = Query(..., description="Second number"), 
-    service: CalculatorServices = Depends()
-):
-    result = service.addition(num1, num2)
-    return {"operation": "addition", "num1": num1, "num2": num2, "result": result}
-
-@router.get("/subtraction", status_code=status.HTTP_200_OK)
-def subtraction(
-    num1: float = Query(..., description="First number"), 
-    num2: float = Query(..., description="Second number"), 
-    service: CalculatorServices = Depends()
-):
-    result = service.subtraction(num1, num2)
-    return {"operation": "subtraction", "num1": num1, "num2": num2, "result": result}
-
-@router.get("/multiplication", status_code=status.HTTP_200_OK)
-def multiplication(
-    num1: float = Query(..., description="First number"), 
-    num2: float = Query(..., description="Second number"), 
-    service: CalculatorServices = Depends()
-):
-    result = service.multiplication(num1, num2)
-    return {"operation": "multiplication", "num1": num1, "num2": num2, "result": result}
-
-@router.get("/division", status_code=status.HTTP_200_OK)
-def division(
-    num1: float = Query(..., description="First number"), 
-    num2: float = Query(..., description="Second number"), 
-    service: CalculatorServices = Depends()
-):
-    try:
-        result = service.division(num1, num2)
-        return {"operation": "division", "num1": num1, "num2": num2, "result": result}
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-@router.get("/depreciation", status_code=status.HTTP_200_OK)
+@router.post("/depreciation", status_code=status.HTTP_200_OK)
 def penyusutan(
     harga_perolehan: float = Query(..., description="Acquisition cost (must be > 0)"),
     estimasi_umur: float = Query(..., description="Estimated useful life in years (must be > 0)"),
@@ -82,7 +43,7 @@ def penyusutan(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-@router.get("/present-value", status_code=status.HTTP_200_OK)
+@router.post("/present-value", status_code=status.HTTP_200_OK)
 def present_value(
     future_value: float = Query(..., description="Future Value (must be > 0)"),
     rate: float = Query(..., description="Rate in %"),
@@ -97,7 +58,7 @@ def present_value(
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     
-@router.get("/weighted-average", status_code=status.HTTP_200_OK)
+@router.post("/weighted-average", status_code=status.HTTP_200_OK)
 def weighted_average(
     n_total: float = Query(1, description="Total row of loss rate and weight"), 
     loss_rate_array: List[float] = Query(..., description="Lost rate value in %"),

@@ -30,46 +30,44 @@ def get_all_users(
         },
     }
 
-@router.get("/user/id/{id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
+@router.get("/{user_id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_user_by_id(
-    id: uuid.UUID,
+    user_id: uuid.UUID,
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: User = Depends(get_current_user),
 ):
-    user = service.get_user_by_options(option="id", value=id)
+    user = service.get_user_by_options(option="id", value=user_id)
     return {
         "message": "User retrieved successfully",
         "result": user,
     }
 
-@router.get("/user/email/{email}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
+# UN-TESTED
+# CURRENT ERROR: NEED TO DELETE THE PROFILE FIRST
+@router.delete("/{user_id}", response_model=DeleteUserResponse, status_code=status.HTTP_200_OK)
 @inject
-def get_user_by_email(
-    email: str,
+def delete_user(
+    user_id: uuid.UUID,
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user)
 ):
-    user = service.get_user_by_options(option="email", value=email)
-    return {
-        "message": "User retrieved successfully",
-        "result": user,
-    }
-
-@router.get("/user/company/{company_id}", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
-@inject
-def get_user_by_company(
-    company_id: uuid.UUID,
-    service: UserService = Depends(Provide[Container.user_service]),
-    current_user: User = Depends(get_current_user),
-):
-    user = service.get_user_by_options(option="company_id", value=company_id)
-    return {
-        "message": "User retrieved successfully",
-        "result": user,
-    }
+    return service.delete_user(user_id)
 
 @router.get("/me", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
+@inject
+def get_current_user(
+    service: UserService = Depends(Provide[Container.user_service]),
+    current_user: User = Depends(get_current_user)
+):
+    user = service.get_user_by_options("id", current_user["id"])
+
+    return {
+        "message": "User retrieved successfully",
+        "result": user,
+    }
+
+@router.get("/me/profile", response_model=FindUserByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_current_user(
     service: UserService = Depends(Provide[Container.user_service]),
@@ -100,14 +98,19 @@ def attach_user_profile(
         "result": simplified_profile,
     }
 
-# UN-TESTED
-# CURRENT ERROR: NEED TO DELETE THE PROFILE FIRST
-@router.delete("/user/id/{id}", response_model=DeleteUserResponse, status_code=status.HTTP_200_OK)
+@router.patch("/me/profile", response_model=UpdateUserProfileResponse, status_code=status.HTTP_201_CREATED)
 @inject
-def delete_user(
-    id: uuid.UUID,
+def attach_user_profile(
+    profile_info,
     service: UserService = Depends(Provide[Container.user_service]),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    return service.delete_user(id)
+    user_id = current_user["id"]
+    profile = service.attach_user_profile(user_id, profile_info)
+    simplified_profile = profile.model_dump(exclude_none=True)
+
+    return {
+        "message": "Profile attached successfully",
+        "result": simplified_profile,
+    }
     

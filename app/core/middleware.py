@@ -1,7 +1,11 @@
+from fastapi import FastAPI
 from loguru import logger
 from functools import wraps
 from typing import Callable, Any
 from dependency_injector.wiring import inject as di_inject
+from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from app.services.base_service import BaseService
 
 def inject(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -20,3 +24,12 @@ def inject(func: Callable[..., Any]) -> Callable[..., Any]:
 
             return result
     return wrapper
+
+def register_middleware(app: FastAPI):
+    app.add_middleware(
+        CORSMiddleware, 
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"]
+    )

@@ -41,3 +41,44 @@ def create_new_access_token(
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
     return service.create_new_access_token_service(refresh_token)
+
+@router.get('/me')
+@inject
+def authenticated_user():
+    pass
+
+@router.get('/verify-email')
+@inject
+def authenticated_use():
+    pass
+
+@router.post('/verify-email/resend')
+@inject
+def authenticated_use():
+    pass
+
+@router.post('/password/forgot')
+@inject
+def authenticated_use():
+    pass
+
+
+@router.post('/password/reset')
+@inject
+def authenticated_use():
+    pass
+
+@router.post('/password/change')
+@inject
+def authenticated_use():
+    pass
+
+@router.get('/sessions')
+@inject
+def authenticated_use():
+    pass
+
+@router.delete('/sessions')
+@inject
+def authenticated_use():
+    pass

@@ -11,6 +11,8 @@ from app.models.doc_category_model import DocumentCategory
 class RequestStatus(str, enum.Enum):
     pending = "pending"
     uploaded = "uploaded"
+    accepted = "accepted"
+    rejected = "rejected"
     overdue = "overdue"
 
 class DocumentRequest(BaseModel, table=True):

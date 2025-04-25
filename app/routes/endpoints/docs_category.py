@@ -31,14 +31,14 @@ def get_all_docs_categories(
         },
     }
 
-@router.get("/id/{id}", response_model=FindDocumentCategoryByOptionsResponse, status_code=status.HTTP_200_OK)
+@router.get("/{docs_category_id}", response_model=FindDocumentCategoryByOptionsResponse, status_code=status.HTTP_200_OK)
 @inject
 def get_docs_category_by_id(
-    id: uuid.UUID,
+    docs_category_id: uuid.UUID,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    result = service.get_docs_category_by_options(option="id", value=id)
+    result = service.get_docs_category_by_options(option="id", value=docs_category_id)
     return {
         "message": "Company retrieved successfully",
         "result": result,
@@ -53,9 +53,10 @@ def create_docs_category(
 ):
     return service.create_docs_category(docs_category)
 
-@router.put("/id/{id}", response_model=UpdateDocumentCategoryResponse, status_code=status.HTTP_200_OK)
+@router.put("/{docs_category_id}", response_model=UpdateDocumentCategoryResponse, status_code=status.HTTP_200_OK)
 @inject
 def update_docs_category(
+    docs_category_id: uuid.UUID,
     docs_category: UpdateDocumentCategoryRequest,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
     current_user: UserDict = Depends(get_current_user),
@@ -66,10 +67,11 @@ def update_docs_category(
         "result": result,
     }
 
-@router.delete("/id/{id}", response_model=DeleteDocumentCategoryResponse, status_code=status.HTTP_200_OK)
+@router.delete("/{docs_category_id}", response_model=DeleteDocumentCategoryResponse, status_code=status.HTTP_200_OK)
 @inject
 def delete_docs_category(
+    docs_category_id: uuid.UUID,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
     current_user: UserDict = Depends(get_current_user),
 ):
-    return service.delete_docs_category(id)
+    return service.delete_docs_category(docs_category_id)
