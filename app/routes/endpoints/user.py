@@ -11,7 +11,7 @@ from app.services.user_service import UserService
 router = APIRouter(prefix="/users", tags=["User Management"])
 
 @router.get("/", 
-    response_model=dict, 
+    response_model=FindAllUsersResponse, 
     status_code=status.HTTP_200_OK, 
     response_model_exclude={"result": {"__all__": {"password"}}}, 
     response_model_exclude_none=True)
@@ -26,7 +26,7 @@ def get_all_users(
     company_id: Optional[UUID] = Query(None, description=""),
     service: UserService = Depends(Provide[Container.user_service]),
     current_user: User = Depends(get_current_user)
-) -> FindAllUsersResponse:
+):
     filters: Dict[str, Any] = {}
     if email:
         filters["email"] = email

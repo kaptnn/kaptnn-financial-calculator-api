@@ -1,11 +1,11 @@
-import uuid
+from uuid import UUID
 import bcrypt
 import base64
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from app.core import security
 from app.repositories.user_repo import UserRepository
-from app.schema.auth_schema import Token, UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
+from app.schema.auth_schema import UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
 from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
 
@@ -17,26 +17,28 @@ class AuthService(BaseService):
     def sign_up(self, user: UserRegisterRequest) -> UserRegisterResponse:
         is_user_exist = self.user_repository.get_user_by_options("email", user.email)
         
-        if is_user_exist is not None:
+        if is_user_exist and is_user_exist.result:
             raise DuplicatedError("User with this email already exists")
 
         encrypted_password = self.hash_password(user.password)
-        new_user = self.user_repository.create_user(name=user.name, email=user.email, password=encrypted_password, company_id=uuid.UUID(user.company_id))
+        new_user = self.user_repository.create_user(name=user.name, email=user.email, password=encrypted_password, company_id=user.company_id)
 
         if not new_user:
             raise InternalServerError("Failed to create user. Please try again later")
 
-        new_user_profile = self.user_repository.create_user_profile(user_id=new_user.id)
+        user_id = new_user.id
 
+        new_user_profile = self.user_repository.create_user_profile(user_id)
+        
         if not new_user_profile:
-            existing_user = self.user_repository.get_user_by_options("id", new_user.id)
-            if not existing_user:
-                raise HTTPException(status_code=404, detail="User not found")
-
-            self.user_repository.delete_user(new_user.id)
+            self.user_repository.delete_user(user_id)
             raise InternalServerError("Failed to create user profile. Please try again later")
-
-        return {"message": "User successfully registered"}
+        
+        return UserRegisterResponse(
+            message="User successfully registered",
+            result=None,
+            meta=None
+        )
 
     def sign_in(self, credentials: UserLoginRequest) -> UserLoginResponse:
         user = self.user_repository.get_user_by_options("email", credentials.email)

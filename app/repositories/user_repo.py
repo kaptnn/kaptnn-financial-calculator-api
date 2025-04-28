@@ -1,4 +1,5 @@
 from uuid import UUID
+from pydantic import EmailStr
 from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
 from typing import Any, Callable, Dict, Union, Optional
@@ -76,9 +77,9 @@ class UserRepository(BaseRepository):
                     meta=None
                 )
         
-    def create_user(self, name: str, email: str, password: str, company_id: str) -> User:
+    def create_user(self, name: str, email: EmailStr, password: str, company_id: str) -> User:
         with self.session_factory() as session:
-            user = User(name=name, email=email, password=password, company_id=company_id, id=None, created_at=None, updated_at=None)
+            user = User(name=name, email=email, password=password, company_id=company_id)
 
             session.add(user)
             session.commit()
@@ -87,9 +88,9 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return user
         
-    def create_user_profile(self, user_id: str) -> Profile:
+    def create_user_profile(self, user_id: UUID) -> Profile:
         with self.session_factory() as session:
-            profile = Profile(user_id=user_id, id=None, created_at=None, updated_at=None)
+            profile = Profile(user_id=user_id)
 
             session.add(profile)
             session.commit()
@@ -111,9 +112,11 @@ class UserRepository(BaseRepository):
             session.commit()
             session.refresh(profile)
 
+            ProfileSchema.model_validate(profile)
+
             return UpdateUserProfileResponse(
                 message="Success updated data from repository",
-                result=ProfileSchema.model_validate(profile),
+                result=None,
                 meta=None
             )
         

@@ -9,16 +9,23 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.post("/register", response_model=UserRegisterResponse ,status_code=status.HTTP_201_CREATED)
+@router.post("/register", 
+    response_model=UserRegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+    response_model_exclude={"result": {"__all__": {"password"}}}, 
+    response_model_exclude_none=True)
 @inject
 def sign_up(
     user: UserRegisterRequest,
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
-    result = service.sign_up(user)
-    return result
+    return service.sign_up(user)
 
-@router.post("/login", response_model=UserLoginResponse, status_code=status.HTTP_200_OK)
+@router.post("/login", 
+    response_model=UserLoginResponse, 
+    status_code=status.HTTP_200_OK,
+    response_model_exclude={"result": {"__all__": {"password"}}}, 
+    response_model_exclude_none=True)
 @inject
 def sign_in(
     credentials: UserLoginRequest,
@@ -26,15 +33,22 @@ def sign_in(
 ):
     return service.sign_in(credentials)
 
-@router.post("/logout", response_model=UserLogoutResponse, status_code=status.HTTP_200_OK)
+@router.post("/logout", 
+    response_model=UserLogoutResponse, 
+    status_code=status.HTTP_200_OK,
+    response_model_exclude={"result": {"__all__": {"password"}}}, 
+    response_model_exclude_none=True)
 @inject
 def sign_out(
     service: AuthService = Depends(Provide[Container.auth_service]),
-    current_user: User = Depends(get_current_user) #Middleware
+    current_user: User = Depends(get_current_user)
 ):
     return service.sign_out()
 
-@router.post("/token/refresh", status_code=status.HTTP_200_OK)
+@router.post("/token/refresh", 
+    status_code=status.HTTP_200_OK,
+    response_model_exclude={"result": {"__all__": {"password"}}}, 
+    response_model_exclude_none=True)
 @inject
 def create_new_access_token(
     refresh_token: str,
