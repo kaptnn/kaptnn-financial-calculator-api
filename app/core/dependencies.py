@@ -1,47 +1,32 @@
 import jwt
-import uuid
+from uuid import UUID
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import ValidationError
 from app.core.config import configs
 from app.core.container import Container
+from app.schema.user_schema import FindUserByOptionsResponse, User
 from app.services.user_service import UserService
 
 @inject
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
     service: UserService = Depends(Provide[Container.user_service])
-):
+) -> User:
+    token = credentials.credentials
     try:
-        token = credentials.credentials
         payload = jwt.decode(
             token,
             configs.JWT_SECRET_KEY,
             algorithms=['HS256']
         )
-        user_id_str = payload.get("sub")
-        if not user_id_str:
-            raise HTTPException(
+        user_id = UUID(payload.get("sub", ""))
+    except Exception:
+        raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
             )
-        try:
-            user_id = uuid.UUID(user_id_str)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid user id in token",
-            )
-            
-        current_user = service.get_user_by_options("id", user_id)
-        if not current_user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-            )
-
-        return current_user
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,3 +49,13 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
+            
+    response: FindUserByOptionsResponse = service.get_user_by_options("id", user_id)
+    current_user = response.result
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    return current_user

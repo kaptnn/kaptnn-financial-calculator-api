@@ -1,14 +1,17 @@
-import uuid
+from uuid import UUID
 from typing import Optional
 from pydantic import BaseModel, Field
 
 class ModelBaseInfo(BaseModel):
-    id: str
+    id: UUID
+
+    class Config:
+        from_attributes = True
 
 class FindBase(BaseModel):
-    ordering: Optional[str] = Field(default=None, description="Field to order by")
-    page: Optional[int] = Field(default=1, ge=1, description="Page number")
-    page_size: Optional[int] = Field(default=10, ge=1, le=100, description="Items per page")
+    current_page: Optional[int] = Field(1, ge=1, description="Page number")
+    total_pages: Optional[int]
+    total_items: Optional[int]
 
 class SearchOptions(FindBase):
-    total_count: Optional[int]
+    total_count: Optional[int] = Field(..., description="Total number of items matching the query")

@@ -1,61 +1,80 @@
-import uuid
-from sqlmodel import Session, select
+from uuid import UUID
+from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
-from typing import Callable, List, Union, Optional, Tuple
+from typing import Any, Callable, Dict, Union, Optional
 from app.models.user_model import User
 from app.models.profile_model import Profile
 from app.repositories.base_repo import BaseRepository
+from app.schema.user_schema import DeleteUserResponse, FindAllUsersResponse, FindUserByOptionsResponse, UpdateUserProfileRequest, User as UserSchema, Profile as ProfileSchema, UpdateUserProfileResponse
 
 class UserRepository(BaseRepository):
     def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
         self.session_factory = session_factory
         super().__init__(session_factory, User)
 
-    def get_all_users(self) -> List[User]:
+    def get_all_users(
+        self, 
+        page: int = 1,
+        limit: int = 100,
+        sort: str = "created_at",
+        order: str = "asc",
+        filters: Optional[Dict[str, Any]] = None
+    ) -> FindAllUsersResponse:
         with self.session_factory() as session:
             statement = select(User, Profile).join(Profile, isouter=True)
+
+            if filters:
+                if email := filters.get("email"):
+                    statement = statement.where(User.email == email)
+                if company_id := filters.get("company_id"):
+                    statement = statement.where(User.company_id == company_id)
+                if name_query := filters.get("name"):
+                    statement = statement.where(User.name.ilike(f"%{name_query}%"))
+            
+            sort_column = getattr(User, sort)
+            if order.lower() == "desc":
+                sort_column = sort_column.desc()
+            statement = statement.order_by(sort_column)
+
+            total_items = session.exec(select(func.count()).select_from(statement.subquery())).one()
+            total_pages = (total_items + limit - 1) // limit
+            offset = (page - 1) * limit
+
+            statement = statement.offset(offset).limit(limit)
             result = session.exec(statement).all()
             
-            data = [
-                {
-                    "id": user.id,
-                    "name": user.name,
-                    "email": user.email,
-                    "company_id": user.company_id,
-                    "created_at": user.created_at,
-                    "updated_at": user.updated_at,
-                    "profile": {
-                        "id": profile.id,
-                        "user_id": profile.user_id,
-                        "role": profile.role,
-                        "membership": profile.membership_status,
-                        "is_verified": profile.is_verified,
-                        "created_at": profile.created_at,
-                        "updated_at": profile.updated_at,
-                    }
-                }
-                for user, profile in result
-            ]
+            users_list = []
+            for user_obj, profile_obj in result:
+                setattr(user_obj, "profile", profile_obj)
+                users_list.append(UserSchema.model_validate(user_obj))
 
-            return data
+            return FindAllUsersResponse(
+                message="Success retrieved data from repository",
+                result=users_list,
+                meta={ 'current_page': page, "total_items": total_items, 'total_pages': total_pages }
+            )
         
-    def get_user_by_options(self, option: str, value: Union[str, int, uuid.UUID]) -> Optional[Union[Tuple[User, Profile], List[Tuple[User, Profile]]]]:
-        if option not in ["id", "email", "company_id"]:
-            raise ValueError("Invalid option")
-
+    def get_user_by_options(self, option: str, value: Union[str, UUID]) -> FindUserByOptionsResponse:
         with self.session_factory() as session:
             statement = select(User, Profile).join(Profile, isouter=True).where(getattr(User, option) == value)
-            results = session.exec(statement).all()
+            result = session.exec(statement).all()
 
-            if results is None:
-                return None
-            
-            session.expunge_all()
-            
-            if option in ["id", "email"]:
-                return results[0] if results else None
-            elif option == "company_id":
-                return results
+            if option in ("id", "email"):
+                if not result:
+                    return FindUserByOptionsResponse(
+                        message="No user found",
+                        result=None,
+                        meta=None,
+                    )
+                
+                user_obj, profile_obj = result[0]
+                setattr(user_obj, "profile", profile_obj)
+                user_schema = UserSchema.model_validate(user_obj)
+                return FindUserByOptionsResponse(
+                    message="Success retrieved data from repository",
+                    result=user_schema,
+                    meta=None
+                )
         
     def create_user(self, name: str, email: str, password: str, company_id: str) -> User:
         with self.session_factory() as session:
@@ -79,30 +98,45 @@ class UserRepository(BaseRepository):
             session.expunge_all()
             return profile
         
-    def update_user_profile(self, user_id: int, profile: Profile) -> Profile:
+    def update_user_profile(self, user_id: UUID, profile_info: UpdateUserProfileRequest) -> UpdateUserProfileResponse:
         with self.session_factory() as session:
             statement = select(Profile).where(Profile.user_id == user_id)
-            result = session.exec(statement).one()
+            profile = session.exec(statement).one()
 
-            result = result.model_copy(update=profile.model_dump(exclude_unset=True))
-
-            result = session.merge(result)
+            data = profile_info.model_dump(exclude_unset=True)
+            for field, value in data.items():
+                setattr(profile, field, value)
+            
+            session.add(profile)
             session.commit()
-            session.refresh(result)
+            session.refresh(profile)
 
-            session.expunge_all()
-            return result
+            return UpdateUserProfileResponse(
+                message="Success updated data from repository",
+                result=ProfileSchema.model_validate(profile),
+                meta=None
+            )
         
-    def delete_user(self, id: str) -> bool:
+    def delete_user(self, user_id: UUID) -> DeleteUserResponse:
         with self.session_factory() as session:
-            statement = select(User).where(User.id == id)
-            result = session.exec(statement).one()
+            user = session.get(User, user_id)
+            if not user:
+                return DeleteUserResponse(
+                    message="User not found",
+                    result=None,
+                    meta=None
+                )
 
-            if not result:
-                return False
+            statement = select(Profile).where(Profile.user_id == user_id)
+            profile = session.exec(statement).one()
+            if profile:
+                session.delete(profile)
 
-            session.delete(result)
+            session.delete(user)
             session.commit()
             
-            session.expunge_all()
-            return True
+            return DeleteUserResponse(
+                message="Success deleted data from repository", 
+                result=None, 
+                meta=None
+            )

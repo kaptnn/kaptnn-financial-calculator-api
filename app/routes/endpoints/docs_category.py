@@ -4,7 +4,6 @@ from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
-from app.services.user_service import UserDict
 from app.schema.doc_category_schema import FindDocumentCategoryByOptionsResponse, CreateDocumentCategoryRequest, CreateDocumentCategoryResponse, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse, DeleteDocumentCategoryResponse
 from app.services.docs_manager.docs_category_service import DocsCategoryService
 
@@ -18,7 +17,7 @@ def get_all_docs_categories(
     sort: str = Query("created_at", description="Field to sort by"),
     order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order (asc or desc)"),
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     docs_categories = service.get_all_docs_categories(page=page, limit=limit, sort=sort, order=order)
     return {
@@ -36,7 +35,7 @@ def get_all_docs_categories(
 def get_docs_category_by_id(
     docs_category_id: uuid.UUID,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     result = service.get_docs_category_by_options(option="id", value=docs_category_id)
     return {
@@ -49,7 +48,7 @@ def get_docs_category_by_id(
 def create_docs_category(
     docs_category: CreateDocumentCategoryRequest,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     return service.create_docs_category(docs_category)
 
@@ -59,7 +58,7 @@ def update_docs_category(
     docs_category_id: uuid.UUID,
     docs_category: UpdateDocumentCategoryRequest,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     result = service.update_docs_category(docs_category)
     return {
@@ -72,6 +71,6 @@ def update_docs_category(
 def delete_docs_category(
     docs_category_id: uuid.UUID,
     service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     return service.delete_docs_category(docs_category_id)

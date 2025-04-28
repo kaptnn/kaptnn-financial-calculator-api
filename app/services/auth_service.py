@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from app.core import security
 from app.repositories.user_repo import UserRepository
-from app.schema.auth_schema import UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
+from app.schema.auth_schema import Token, UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
 from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
 
@@ -39,28 +39,28 @@ class AuthService(BaseService):
         return {"message": "User successfully registered"}
 
     def sign_in(self, credentials: UserLoginRequest) -> UserLoginResponse:
-        result = self.user_repository.get_user_by_options("email", credentials.email)
+        user = self.user_repository.get_user_by_options("email", credentials.email)
 
-        if not result:
+        if not user:
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        user = result[0]
-
-        if not self.verify_password(credentials.password, user.password):
+        if not self.verify_password(credentials.password, user.result.password):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        access_token = security.create_access_token(data={"sub": str(user.id)})
-        refresh_token = security.create_refresh_token(data={"sub": str(user.id)})
+        access_token = security.create_access_token(data={"sub": str(user.result.id)})
+        refresh_token = security.create_refresh_token(data={"sub": str(user.result.id)})
 
         response = JSONResponse(
             content={
-                "message": "User successfully logged in",
-                "result": {
-                    "token_type": 'Bearer',
-                    "access_token": access_token,
-                    "refresh_token": refresh_token
-                }
-            })
+                'message': "User successfully logged in",
+                'result': {
+                    'token_type': 'Bearer',
+                    'access_token': access_token,
+                    'refresh_token': refresh_token,
+                },
+                'meta': None
+            }
+        )
         
         response.set_cookie(key="access_token", value=access_token, httponly=True, secure=False, samesite="none")
         response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="none")

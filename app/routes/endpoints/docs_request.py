@@ -4,7 +4,6 @@ from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
 from app.core.dependencies import get_current_user
-from app.services.user_service import UserDict
 from app.schema.doc_request_schema import FindDocumentReqByOptionsResponse, CreateDocumentReqRequest, CreateDocumentReqResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse
 from app.services.docs_manager.docs_request_service import DocsRequestService
 
@@ -18,7 +17,7 @@ def get_all_docs_requests(
     sort: str = Query("created_at", description="Field to sort by"),
     order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order (asc or desc)"),
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     docs_requests = service.get_all_docs_requests(page=page, limit=limit, sort=sort, order=order)
     return {
@@ -36,7 +35,7 @@ def get_all_docs_requests(
 def get_docs_request_by_id(
     docs_request_id: uuid.UUID,
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     result = service.get_docs_request_by_options(option="id", value=docs_request_id)
     return {
@@ -49,7 +48,7 @@ def get_docs_request_by_id(
 def create_docs_request(
     docs_request: CreateDocumentReqRequest,
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     
     return service.create_docs_request(current_user["id"], docs_request)
@@ -59,7 +58,7 @@ def create_docs_request(
 def update_docs_request(
     docs_request: UpdateDocumentReqRequest,
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     result = service.update_docs_request(docs_request)
     return {
@@ -72,6 +71,6 @@ def update_docs_request(
 def delete_docs_request(
     docs_request_id: uuid.UUID,
     service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     return service.delete_docs_request(docs_request_id)

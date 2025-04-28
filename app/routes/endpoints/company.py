@@ -6,7 +6,6 @@ from app.core.middleware import inject
 from app.core.dependencies import get_current_user
 from app.schema.company_schema import FindCompanyByOptionsResponse, CreateCompanyRequest, CreateCompanyResponse, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse
 from app.services.company_service import CompanyService
-from app.services.user_service import UserDict
 
 router = APIRouter(prefix="/companies", tags=["Company"])
 
@@ -35,7 +34,7 @@ def get_all_companies(
 def get_company_by_id(
     id: uuid.UUID,
     service: CompanyService = Depends(Provide[Container.company_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     result = service.get_company_by_options(option="id", value=id)
     return {
@@ -48,7 +47,7 @@ def get_company_by_id(
 def create_company(
     company: CreateCompanyRequest,
     service: CompanyService = Depends(Provide[Container.company_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     return service.create_company(company)
 
@@ -59,7 +58,7 @@ def create_company(
 def update_company(
     company: UpdateCompanyRequest,
     service: CompanyService = Depends(Provide[Container.company_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     result = service.update_company(id, company)
     return {
@@ -74,6 +73,6 @@ def update_company(
 @inject
 def delete_company(
     service: CompanyService = Depends(Provide[Container.company_service]),
-    current_user: UserDict = Depends(get_current_user),
+    current_user = Depends(get_current_user),
 ):
     return service.delete_company(id)
