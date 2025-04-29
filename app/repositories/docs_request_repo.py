@@ -62,7 +62,7 @@ class DocsRequestRepository(BaseRepository):
     ) -> FindDocumentReqByOptionsResponse:
         with self.session_factory() as session:
             statement = select(DocumentRequest).where(getattr(DocumentRequest, option) == value)
-            result = session.exec(statement).one_or_none()
+            result = session.exec(statement).all()
 
             if option in ("id"):
                 if not result:

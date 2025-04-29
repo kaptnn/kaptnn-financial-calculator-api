@@ -49,11 +49,11 @@ class DocsCategoryRepository(BaseRepository):
     def get_docs_category_by_options(self, option: str, value: Union[str, UUID]) -> FindDocumentCategoryByOptionsResponse:
         with self.session_factory() as session:
             statement = select(DocumentCategory).where(getattr(DocumentCategory, option) == value)
-            result = session.exec(statement).one_or_none()
+            result = session.exec(statement).all()
 
             if option in ("id", "name"):
                 if not result:
-                    return FindAllDocumentCategoriesResponse(
+                    return FindDocumentCategoryByOptionsResponse(
                         message="No document category found",
                         result=None,
                         meta=None,
@@ -61,7 +61,7 @@ class DocsCategoryRepository(BaseRepository):
 
                 docs_category_obj = result[0]
                 docs_category_schema = DocumentCategorySchema.model_validate(docs_category_obj)
-                return FindAllDocumentCategoriesResponse(
+                return FindDocumentCategoryByOptionsResponse(
                     message="Success retrieved data from repository",
                     result=docs_category_schema,
                     meta=None

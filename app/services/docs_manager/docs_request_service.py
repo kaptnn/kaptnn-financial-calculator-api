@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from typing import Any, Dict, Optional, Union
 from fastapi import HTTPException, status
@@ -85,7 +85,7 @@ class DocsRequestService(BaseService):
         if target_user is None:
             raise InternalServerError("User not found. Cannot create document request.")
 
-        current_time = datetime.now()
+        current_time = datetime.now(timezone.utc)
         if docs_request.due_date < current_time:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -120,22 +120,31 @@ class DocsRequestService(BaseService):
         if target_user is None:
             raise InternalServerError("User not found. Cannot create document request.")
 
-        current_time = datetime.now()
+        current_time = datetime.now(timezone.utc)
         if docs_request_info.due_date < current_time:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Due date cannot be in the past."
             )
         
-        if docs_request_info.upload_date < existing_docs_request.result.due_date:
+        upload = docs_request_info.upload_date
+        if upload.tzinfo is None:
+            upload = upload.replace(tzinfo=timezone.utc)
+        else:
+            upload = upload.astimezone(timezone.utc)
+
+        due = existing_docs_request.result.due_date
+        if due.tzinfo is None:
+            due = due.replace(tzinfo=timezone.utc)
+        else:
+            due = due.astimezone(timezone.utc)
+
+        if upload < due:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Impossible."
+                detail="Upload date cannot be before the due date."
             )
         
-        if docs_request_info.status not in RequestStatus:
-            raise HTTPException(status_code=400, detail=f"Invalid order: {docs_request_info.status!r}. Must be one of {RequestStatus}")
-
         response = self.docs_req_repository.update_docs_request(docs_request_id, docs_request_info)
 
         if not response:
