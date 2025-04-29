@@ -1,84 +1,104 @@
-import uuid
-from sqlmodel import Session, select
+from datetime import datetime
+from uuid import UUID
+from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
-from typing import Callable, List, Literal, Union, Optional
+from typing import Any, Callable, Dict, Union, Optional
 from app.models.doc_request_model import DocumentRequest
 from app.repositories.base_repo import BaseRepository
+from app.schema.doc_request_schema import FindAllDocumentReqsResponse, FindDocumentReqByOptionsResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse, DocumentReq as DocumentRequestSchema
 
 class DocsRequestRepository(BaseRepository):
     def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
         self.session_factory = session_factory
         super().__init__(session_factory, DocumentRequest)
 
-    def get_all_docs_requests(self) -> List[DocumentRequest]:
+    def get_all_docs_requests(
+        self,
+        page: int = 1,
+        limit: int = 100,
+        sort: str = "created_at",
+        order: str = "asc",
+        filters: Optional[Dict[str, Any]] = None
+    ) -> FindAllDocumentReqsResponse:
         with self.session_factory() as session:
             statement = select(DocumentRequest)
-            result = session.exec(statement).all()
-            
-            data = [
-                {
-                    "id": docs_request.id,
-                    "admin_id": docs_request.admin_id,
-                    "request_title": docs_request.request_title,
-                    "request_desc": docs_request.request_desc,
-                    "target_user_id": docs_request.target_user_id,
-                    "category_id": docs_request.category_id,
-                    "due_date": docs_request.due_date,
-                    "upload_date": docs_request.upload_date,
-                    "status": docs_request.status,
-                    "updated_at": docs_request.updated_at,
-                    "created_at": docs_request.created_at,
-                }
-                for docs_request in result
-            ]
 
-            return data
+            if filters:
+                if status := filters.get("status"):
+                    statement = statement.where(DocumentRequest.status == status)
+                if category_id := filters.get("category_id"):
+                    statement = statement.where(DocumentRequest.category_id == category_id)
+                if target_user_id := filters.get("target_user_id"):
+                    statement = statement.where(DocumentRequest.target_user_id == target_user_id)
+                if admin_id := filters.get("admin_id"):
+                    statement = statement.where(DocumentRequest.admin_id == admin_id)
+                if name_query := filters.get("name"):
+                    statement = statement.where(DocumentRequest.request_title.ilike(f"%{name_query}%"))
+
+            sort_column = getattr(DocumentRequest, sort)
+            if order.lower() == "desc":
+                sort_column = sort_column.desc()
+            statement = statement.order_by(sort_column)
+
+            total_items = session.exec(select(func.count()).select_from(statement.subquery())).one()
+            total_pages = (total_items + limit - 1) // limit
+            offset = (page - 1) * limit
+
+            statement = statement.offset(offset).limit(limit)
+            result = session.exec(statement).all()
+
+            docs_requests_list = [DocumentRequestSchema.model_validate(docs) for docs in result]
+
+            return FindAllDocumentReqsResponse(
+                message="Success retrieved data from repository",
+                result=docs_requests_list,
+                meta={ 'current_page': page, "total_items": total_items, 'total_pages': total_pages }
+            )
         
     def get_docs_request_by_options(
         self, 
-        option: Literal["id", "admin_id", "target_user_id", "category_id"], 
-        value: Union[str, uuid.UUID]
-    ) -> Optional[DocumentRequest]:
-        if option in ["id", "admin_id", "target_user_id", "category_id"]:
-            if isinstance(value, str):
-                try:
-                    value = uuid.UUID(value)
-                except ValueError:
-                    raise ValueError(f"Invalid UUID format for option {option}")
-
+        option: str, 
+        value: Union[str, UUID]
+    ) -> FindDocumentReqByOptionsResponse:
         with self.session_factory() as session:
             statement = select(DocumentRequest).where(getattr(DocumentRequest, option) == value)
             result = session.exec(statement).one_or_none()
 
-            if result is None:
-                return None
+            if option in ("id"):
+                if not result:
+                    return FindDocumentReqByOptionsResponse(
+                        message="No document request found",
+                        result=None,
+                        meta=None,
+                    )
 
-            session.expunge_all()
-            return result
+                docs_request_obj = result[0]
+                docs_request_schema = DocumentRequestSchema.model_validate(docs_request_obj)
+                return FindDocumentReqByOptionsResponse(
+                    message="Success retrieved data from repository",
+                    result=docs_request_schema,
+                    meta=None
+                )
         
     def create_docs_request(
         self,
-        admin,
-        request_title,
-        request_desc,
-        target_user,
-        category,
-        due_date,
+        request_title: str,
+        request_desc: str,
+        admin: UUID,
+        target_user: UUID,
+        category: UUID,
+        due_date: datetime,
     ) -> DocumentRequest:
-        admin_uuid = uuid.UUID(admin) if isinstance(admin, str) else admin
-        target_user_uuid = uuid.UUID(target_user) if isinstance(target_user, str) else target_user
-        category_uuid = uuid.UUID(category) if category and isinstance(category, str) else category
-
-        document_request = DocumentRequest(
-                admin_id=admin_uuid,
+        with self.session_factory() as session:
+            document_request = DocumentRequest(
+                admin_id=admin,
                 request_title=request_title,
                 request_desc=request_desc,
-                target_user_id=target_user_uuid,
-                category_id=category_uuid,
+                target_user_id=target_user,
+                category_id=category,
                 due_date=due_date,
             )
 
-        with self.session_factory() as session:
             session.add(document_request)
             session.commit()
             session.refresh(document_request)
@@ -86,39 +106,47 @@ class DocsRequestRepository(BaseRepository):
             session.expunge_all()
             return document_request
         
-    def update_docs_request(self, id: Union[str, uuid.UUID], document_request: DocumentRequest) -> Optional[DocumentRequest]:
-        doc_request_id = uuid.UUID(id) if isinstance(id, str) else id
-
+    def update_docs_request(
+        self, 
+        doc_request_id: UUID, 
+        document_request_info: UpdateDocumentReqRequest
+    ) -> UpdateDocumentReqResponse:
         with self.session_factory() as session:
             statement = select(DocumentRequest).where(DocumentRequest.id == doc_request_id)
             result = session.exec(statement).one()
 
-            if not result:
-                return None
-
-            for key, value in document_request.items():
-                if hasattr(result, key):
-                    setattr(result, key, value)
+            data = document_request_info.model_dump(exclude_unset=True)
+            for field, value, in data.items():
+                setattr(result, field, value)
 
             session.add(result)
             session.commit()
             session.refresh(result)
 
-            session.expunge_all()
-            return result
+            DocumentRequestSchema.model_validate(result)
 
-    def delete_docs_request(self, id: Union[str, uuid.UUID]) -> bool:
-        doc_request_id = uuid.UUID(id) if isinstance(id, str) else id
+            return UpdateDocumentReqResponse(
+                message="Success updated data from repository",
+                result=None,
+                meta=None
+            )
 
+    def delete_docs_request(self, doc_request_id: UUID) -> DeleteDocumentReqResponse:
         with self.session_factory() as session:
-            statement = select(DocumentRequest).where(DocumentRequest.id == doc_request_id)
-            result = session.exec(statement).one()
-
-            if not result:
-                return False
-
-            session.delete(result)
-            session.commit()
+            docs_request = session.get(DocumentRequest, doc_request_id)
             
-            session.expunge_all()
-            return True
+            if not docs_request:
+                return DeleteDocumentReqResponse(
+                    message="Document request not found",
+                    result=None,
+                    meta=None
+                )
+
+            session.delete(docs_request)
+            session.commit()
+
+            return DeleteDocumentReqResponse(
+                message="Success deleted data from repository",
+                result=None,
+                meta=None
+            )

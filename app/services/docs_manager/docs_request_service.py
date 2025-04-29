@@ -1,148 +1,155 @@
-import uuid
 from datetime import datetime
-from typing import Tuple, TypedDict, Optional, Union
-from fastapi import HTTPException
+from uuid import UUID
+from typing import Any, Dict, Optional, Union
+from fastapi import HTTPException, status
 from app.core.exceptions import InternalServerError
-from app.models.doc_request_model import DocumentRequest
+from app.models.profile_model import Role
+from app.models.doc_request_model import RequestStatus
+from app.schema.user_schema import User
 from app.services.base_service import BaseService
 from app.repositories.docs_request_repo import DocsRequestRepository 
 from app.repositories.user_repo import UserRepository
-from app.schema.doc_request_schema import CreateDocumentReqRequest, CreateDocumentReqResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse, DocumentReq
-
-class DocumentRequestDict(TypedDict):
-    id: str
-    admin_id: str
-    target_user_id: str
-    category_id: str
-    due_date: datetime
-    upload_date: Optional[datetime]
-    status: str
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+from app.schema.doc_request_schema import CreateDocumentReqRequest, CreateDocumentReqResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse, FindAllDocumentReqsResponse, FindDocumentReqByOptionsResponse
 
 class DocsRequestService(BaseService):
+    ALLOWED_SORTS = {"id", "request_title", "created_at", "admin_id", "target_user_id", "category_id", "due_date", "upload_date"}
+    ALLOWED_ORDERS = {"asc", "desc"}
+    ALLOWED_FILTERS = {"id", "status", "name", "admin_id", "target_user_id", "category_id"}
+
     def __init__(self, docs_req_repository: DocsRequestRepository, user_repository: UserRepository):
         self.docs_req_repository = docs_req_repository
         self.user_repository = user_repository
         super().__init__(docs_req_repository)
         super().__init__(user_repository)
 
-    def get_all_docs_requests(self, page: int, limit: int, sort: str, order: str) -> dict:
-        docs_reqs = self.docs_req_repository.get_all_docs_requests()
-
-        if not docs_reqs:
-            return {"result": [], "total_items": 0, "total_pages": 0}
-
-        if sort not in docs_reqs[0]:
-            raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort}")
-
-        reverse = (order.lower() == "desc")
-        companies_sorted = sorted(docs_reqs, key=lambda x: x.get(sort, ""), reverse=reverse)
-
-        total_items = len(companies_sorted)
-        total_pages = (total_items + limit - 1) // limit
-        offset = (page - 1) * limit
-        paginated_docs_reqs = companies_sorted[offset : offset + limit]
-
-        return {
-            "result": paginated_docs_reqs,
-            "total_items": total_items,
-            "total_pages": total_pages,
-        }
-
-    def get_docs_request_by_options(self, option: str, value: Union[str, uuid.UUID]) -> DocumentRequestDict:
-        result = self.docs_req_repository.get_docs_request_by_options(option, value)
-
-        if not result:
-            raise HTTPException(status_code=404, detail="Company not found")
+    def get_all_docs_requests(
+        self, 
+        page: int = 1, 
+        limit: int = 100, 
+        sort: str = "created_at", 
+        order: str = "asc",
+        filters: Optional[Dict[str, Any]] = None
+    ) -> FindAllDocumentReqsResponse:
+        if page < 1:
+            page = 1
+        if not (1 <= limit <= 100):
+            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
         
-        return DocumentRequestDict(
-            id=str(result.id),
-            admin_id=str(result.admin_id),
-            target_user_id=str(result.target_user_id),
-            category_id=str(result.category_id),
-            due_date=result.due_date,
-            upload_date=result.upload_date,
-            status=result.status,
-            created_at=result.created_at,
-            updated_at=result.updated_at,
+        if sort not in self.ALLOWED_SORTS:
+            raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort!r}. Must be one of {self.ALLOWED_SORTS}")
+        
+        order = order.lower()
+        if order not in self.ALLOWED_ORDERS:
+            raise HTTPException(status_code=400, detail=f"Invalid order: {order!r}. Must be one of {self.ALLOWED_ORDERS}")
+        
+        if filters is not None:
+            invalid_keys = set(filters.keys()) - self.ALLOWED_FILTERS
+            if invalid_keys:
+                raise HTTPException(status_code=400, detail=f"Invalid filter keys: {invalid_keys}. Allowed filters are {self.ALLOWED_FILTERS}")
+
+        return self.docs_req_repository.get_all_docs_requests(
+            page=page,
+            limit=limit,
+            sort=sort,
+            order=order,
+            filters=filters
         )
 
-    def create_docs_request(self, admin_id: Union[str, uuid.UUID], docs_request: CreateDocumentReqRequest) -> CreateDocumentReqResponse:
-        existing_user_row = self.user_repository.get_user_by_options("id", admin_id)
+    def get_docs_request_by_options(
+        self, 
+        option: str, 
+        value: Union[str, UUID]
+    ) -> FindDocumentReqByOptionsResponse:
+        if option not in self.ALLOWED_FILTERS:
+            raise HTTPException(status_code=400, detail="Invalid option field")
+
+        response = self.docs_req_repository.get_docs_request_by_options(option, value)
+
+        if response.result is None:
+            raise HTTPException(status_code=404, detail="Company not found")
         
-        if existing_user_row is None:
+        return response
+
+    def create_docs_request(self, admin: User, docs_request: CreateDocumentReqRequest) -> CreateDocumentReqResponse:
+        if admin.profile.role != Role.admin:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User is not authorized to create document requests."
+            )
+        
+        existing_user = self.user_repository.get_user_by_options("id", admin.id)
+        if existing_user is None:
             raise InternalServerError("User not found. Cannot create document request.")
         
-        if hasattr(existing_user_row, "_mapping"):
-            existing_user = dict(existing_user_row._mapping)
-        elif isinstance(existing_user_row, (list, tuple)):
-            existing_user = existing_user_row[0] if existing_user_row else {}
-        else:
-            existing_user = existing_user_row
+        target_user = self.user_repository.get_user_by_options("id", docs_request.target_user_id)
+        if target_user is None:
+            raise InternalServerError("User not found. Cannot create document request.")
 
-        profile = existing_user.get("Profile")
-        user_role = profile.role if profile else None
-        
-        if user_role != "admin":
-            raise InternalServerError("User is not authorized to create document requests.")
+        current_time = datetime.now()
+        if docs_request.due_date < current_time:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Due date cannot be in the past."
+            )
 
         new_docs_request = self.docs_req_repository.create_docs_request(
-            admin=admin_id,
             request_title=docs_request.request_title,
             request_desc=docs_request.request_desc,
+            admin=admin.id,
             target_user=docs_request.target_user_id,
             category=docs_request.category_id,
-            due_date=docs_request.due_date,
+            due_date=docs_request.due_date
         )
 
         if not new_docs_request:
             raise InternalServerError("Failed to create document request. Please try again later")
 
-        result = DocumentReq(
-            id=str(new_docs_request.id),
-            admin_id=str(new_docs_request.admin_id),
-            target_user_id=str(new_docs_request.target_user_id),
-            category_id=str(new_docs_request.category_id),
-            due_date=new_docs_request.due_date,
-            upload_date=new_docs_request.upload_date,
-            status=new_docs_request.status,
-            created_at=new_docs_request.created_at,
-            updated_at=new_docs_request.updated_at,
-        )
-
         return CreateDocumentReqResponse(
             message="Document request successfully registered",
-            result=result.model_dump()
+            result=None,
+            meta=None
         )
 
-    def update_docs_request(self, docs_request_id: str, docs_request: UpdateDocumentReqRequest) -> UpdateDocumentReqResponse:
+    def update_docs_request(self, docs_request_id: UUID, docs_request_info: UpdateDocumentReqRequest) -> UpdateDocumentReqResponse:
         existing_docs_request = self.docs_req_repository.get_docs_request_by_options("id", docs_request_id)
         
-        if not existing_docs_request:
-            raise HTTPException(status_code=404, detail="Docs Request not found")
+        if existing_docs_request.result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document request not found")
+        
+        target_user = self.user_repository.get_user_by_options("id", docs_request_info.target_user_id)
+        if target_user is None:
+            raise InternalServerError("User not found. Cannot create document request.")
 
-        updated_docs_request = self.docs_req_repository.update_docs_request(docs_request_id, docs_request)
+        current_time = datetime.now()
+        if docs_request_info.due_date < current_time:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Due date cannot be in the past."
+            )
+        
+        if docs_request_info.upload_date < existing_docs_request.result.due_date:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Impossible."
+            )
+        
+        if docs_request_info.status not in RequestStatus:
+            raise HTTPException(status_code=400, detail=f"Invalid order: {docs_request_info.status!r}. Must be one of {RequestStatus}")
 
-        return DocumentRequest(
-            id=updated_docs_request._id,
-            admin_id=updated_docs_request.admin_id,
-            target_user_id=str(updated_docs_request.target_user_id),
-            category_id=str(updated_docs_request.category_id),
-            due_date=updated_docs_request.due_date,
-            upload_date=updated_docs_request.upload_date,
-            status=updated_docs_request.status,
-            created_at=updated_docs_request.created_at,
-            updated_at=updated_docs_request.updated_at,
-        )
+        response = self.docs_req_repository.update_docs_request(docs_request_id, docs_request_info)
 
-    def delete_docs_request(self, docs_request_id: str) -> DeleteDocumentReqResponse:
+        if not response:
+            raise InternalServerError("Failed to update user. Please try again later")
+
+        return response
+
+    def delete_docs_request(self, docs_request_id: UUID) -> DeleteDocumentReqResponse:
         existing_docs_request = self.docs_req_repository.get_docs_request_by_options("id", docs_request_id)
         if not existing_docs_request:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document request not found")
 
-        success = self.docs_req_repository.delete_docs_request(docs_request_id)
-        if not success:
+        response = self.docs_req_repository.delete_docs_request(docs_request_id)
+        if not response:
             raise InternalServerError("Failed to delete document request. Please try again later")
         
-        return {"message": "Docs request deleted successfully"}
+        return response

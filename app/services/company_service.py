@@ -139,7 +139,6 @@ class CompanyService(BaseService):
 
         return response
 
-
     def delete_company(self, company_id: UUID) -> DeleteCompanyResponse:
         existing_company = self.company_repository.get_company_by_options("id", company_id)
         if not existing_company:
