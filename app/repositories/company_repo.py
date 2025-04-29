@@ -1,57 +1,78 @@
-import uuid
+from uuid import UUID
 from datetime import datetime
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 from app.models.company_model import Company
 from app.repositories.base_repo import BaseRepository
+from app.schema.company_schema import DeleteCompanyResponse, FindAllCompaniesResponse, Company as CompanySchema, FindCompanyByOptionsResponse, UpdateCompanyRequest, UpdateCompanyResponse
 
 class CompanyRepository(BaseRepository):
     def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
         self.session_factory = session_factory
         super().__init__(session_factory, Company)
 
-    def get_all_companies(self) -> List[Company]:
+    def get_all_companies(
+        self,
+        page: int = 1,
+        limit: int = 100,
+        sort: str = "created_at",
+        order: str = "asc",
+        filters: Optional[Dict[str, Any]] = None
+    ) -> FindAllCompaniesResponse:
         with self.session_factory() as session:
             statement = select(Company)
-            result = session.exec(statement).all()
             
-            data = [
-                {
-                    "id": company.id,
-                    "company_name": company.company_name,
-                    "year_of_assignment": company.year_of_assignment,
-                    "start_audit_period": company.start_audit_period,
-                    "end_audit_period": company.end_audit_period,
-                    "created_at": company.created_at,
-                    "updated_at": company.updated_at,
-                }
-                for company in result
-            ]
+            if filters:
+                if year_of_assignment := filters.get("year_of_assignment"):
+                    statement = statement.where(Company.year_of_assignment == year_of_assignment)
+                if name_query := filters.get("name"):
+                    statement = statement.where(Company.company_name.ilike(f"%{name_query}%"))
 
-            return data
+            sort_column = getattr(Company, sort)
+            if order.lower() == "desc":
+                sort_column = sort_column.desc()
+            statement = statement.order_by(sort_column)
+
+            total_items = session.exec(select(func.count()).select_from(statement.subquery())).one()
+            total_pages = (total_items + limit - 1) // limit
+            offset = (page - 1) * limit
+
+            statement = statement.offset(offset).limit(limit)
+            result = session.exec(statement).all()
+
+            companies_list = [CompanySchema.model_validate(c) for c in result]
+            
+            return FindAllCompaniesResponse(
+                message="Success retrieved data from repository",
+                result=companies_list,
+                meta={ 'current_page': page, "total_items": total_items, 'total_pages': total_pages }
+            )
         
-    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Union[List[Company], Company]]:
-        if option not in ["id", "company_name"]:
-            raise ValueError("Invalid option")
-
+    def get_company_by_options(self, option: str, value: Union[str, UUID]) -> FindCompanyByOptionsResponse:
         with self.session_factory() as session:
             statement = select(Company).where(getattr(Company, option) == value)
             result = session.exec(statement).all()
 
-            if result is None:
-                return None
-            
-            session.expunge_all()
+            if option in ("id", "company_name"):
+                if not result:
+                    return FindCompanyByOptionsResponse(
+                        message="No company found",
+                        result=None,
+                        meta=None,
+                    )
 
-            if option in ["id"]:
-                return result[0] if result else None
-            elif option == "company_name":
-                return result
+                company_obj = result[0]
+                company_schema = CompanySchema.model_validate(company_obj)
+                return FindCompanyByOptionsResponse(
+                    message="Success retrieved data from repository",
+                    result=company_schema,
+                    meta=None
+                )
             
     def create_company(self, company_name: str, year_of_assignment: int, start_audit_period: datetime, end_audit_period=datetime) -> Company:
         with self.session_factory() as session:
-            company = Company(company_name=company_name, year_of_assignment=year_of_assignment, start_audit_period=start_audit_period, end_audit_period=end_audit_period, id=None, created_at=None, updated_at=None)
+            company = Company(company_name=company_name, year_of_assignment=year_of_assignment, start_audit_period=start_audit_period, end_audit_period=end_audit_period)
 
             session.add(company)
             session.commit()
@@ -60,35 +81,43 @@ class CompanyRepository(BaseRepository):
             session.expunge_all()
             return company
         
-    def update_company(self, id: str, company: dict) -> Optional[Company]:
+    def update_company(self, company_id: UUID, company_info: UpdateCompanyRequest) -> UpdateCompanyResponse:
         with self.session_factory() as session:
-            statement = select(Company).where(Company.id == id)
-            result = session.exec(statement).one()
-
-            if not result:
-                return None
+            statement = select(Company).where(Company.id == company_id)
+            company = session.exec(statement).one()
             
-            for key, value in company.items():
-                if hasattr(result, key):
-                    setattr(result, key, value)
+            data = company_info.model_dump(exclude_unset=True)
+            for field, value, in data.items():
+                setattr(company, field, value)
 
-            session.add(result)
+            session.add(company)
             session.commit()
-            session.refresh(result)
+            session.refresh(company)
 
-            session.expunge_all()
-            return result
+            CompanySchema.model_validate(company)
+
+            return UpdateCompanyResponse(
+                message="Success updated data from repository",
+                result=None,
+                meta=None
+            )
         
-    def delete_company(self, id: str) -> bool:
+    def delete_company(self, company_id: UUID) -> DeleteCompanyResponse:
         with self.session_factory() as session:
-            statement = select(Company).where(Company.id == id)
-            result = session.exec(statement).one()
+            company = session.get(Company, company_id)
 
-            if not result:
-                return False
+            if not company:
+                return DeleteCompanyResponse(
+                    message="Company not found",
+                    result=None,
+                    meta=None
+                )
 
-            session.delete(result)
+            session.delete(company)
             session.commit()
             
-            session.expunge_all()
-            return True
+            return DeleteCompanyResponse(
+                message="Success deleted data from repository",
+                result=None,
+                meta=None
+            )

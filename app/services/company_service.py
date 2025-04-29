@@ -1,85 +1,96 @@
-import uuid
 from datetime import datetime
-from typing import List, TypedDict, Optional, Union
-from fastapi import HTTPException
+from uuid import UUID
+from typing import Any, Dict, Optional, Union
+from fastapi import HTTPException, status
 from app.core.exceptions import InternalServerError
 from app.repositories.company_repo import CompanyRepository 
-from app.schema.company_schema import CreateCompanyRequest, CreateCompanyResponse, Company, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse, FindCompanyByOptionsResponse
+from app.schema.company_schema import CreateCompanyRequest, CreateCompanyResponse, Company, FindAllCompaniesResponse, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse, FindCompanyByOptionsResponse
 from app.services.base_service import BaseService
 
-class CompanyDict(TypedDict):
-    id: str
-    company_name: str
-    year_of_assignment: int
-    start_audit_period: datetime 
-    end_audit_period: datetime
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
-
 class CompanyService(BaseService):
+    ALLOWED_SORTS = {"id", "company_name", "created_at"}
+    ALLOWED_ORDERS = {"asc", "desc"}
+    ALLOWED_FILTERS = {"id", "name", "year_of_assignment"}
+
     def __init__(self, company_repository: CompanyRepository):
         self.company_repository = company_repository
         super().__init__(company_repository)
 
-    def get_all_companies(self, page: int, limit: int, sort: str, order: str) -> dict:
-        companies = self.company_repository.get_all_companies()
+    def get_all_companies(
+        self, 
+        page: int = 1, 
+        limit: int = 100, 
+        sort: str = "created_at", 
+        order: str = "asc",
+        filters: Optional[Dict[str, Any]] = None
+    ) -> FindAllCompaniesResponse:
+        if page < 1:
+            page = 1
+        if not (1 <= limit <= 100):
+            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
+        
+        if sort not in self.ALLOWED_SORTS:
+            raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort!r}. Must be one of {self.ALLOWED_SORTS}")
+        
+        order = order.lower()
+        if order not in self.ALLOWED_ORDERS:
+            raise HTTPException(status_code=400, detail=f"Invalid order: {order!r}. Must be one of {self.ALLOWED_ORDERS}")
+        
+        if filters is not None:
+            invalid_keys = set(filters.keys()) - self.ALLOWED_FILTERS
+            if invalid_keys:
+                raise HTTPException(status_code=400, detail=f"Invalid filter keys: {invalid_keys}. Allowed filters are {self.ALLOWED_FILTERS}")
 
-        if not companies:
-            return {"result": [], "total_items": 0, "total_pages": 0}
+        return self.company_repository.get_all_companies(
+            page=page,
+            limit=limit,
+            sort=sort,
+            order=order,
+            filters=filters
+        )
 
-        if sort not in companies[0]:
-            raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort}")
+    def get_company_by_options(
+        self, 
+        option: str, 
+        value: Union[str, UUID]
+    ) -> FindCompanyByOptionsResponse:
+        if option not in self.ALLOWED_FILTERS:
+            raise HTTPException(status_code=400, detail="Invalid option field")
+        
+        response = self.company_repository.get_company_by_options(option, value)
 
-        reverse = (order.lower() == "desc")
-        companies_sorted = sorted(companies, key=lambda x: x.get(sort, ""), reverse=reverse)
-
-        total_items = len(companies_sorted)
-        total_pages = (total_items + limit - 1) // limit
-        offset = (page - 1) * limit
-        paginated_companies = companies_sorted[offset : offset + limit]
-
-        return {
-            "result": paginated_companies,
-            "total_items": total_items,
-            "total_pages": total_pages,
-        }
-
-    def get_company_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Union[CompanyDict, List[CompanyDict]]]:
-        result = self.company_repository.get_company_by_options(option, value)
-
-        if not result:
+        if response.result is None:
             raise HTTPException(status_code=404, detail="Company not found")
 
-        if option == "id":
-            company = result
-            company_dict = CompanyDict(
-                id=str(company.id),
-                company_name=company.company_name,
-                year_of_assignment=company.year_of_assignment,
-                start_audit_period=company.start_audit_period,
-                end_audit_period=company.end_audit_period,
-                created_at=company.created_at,
-                updated_at=company.updated_at,
-            )
-            return company_dict
-
-        elif option == "company_name":
-            companies = []
-            for company in result:
-                companies.append(
-                    CompanyDict(
-                        id=str(company.id), 
-                        company_name=company.company_name,
-                        year_of_assignment=company.year_of_assignment,
-                        start_audit_period=company.start_audit_period,
-                        end_audit_period=company.end_audit_period,
-                        created_at=company.created_at,
-                        updated_at=company.updated_at,
-                    )
-                )
-            return companies
+        return response
 
     def create_company(self, company: CreateCompanyRequest) -> CreateCompanyResponse:
+        current_year = datetime.now().year
+        if company.year_of_assignment > current_year:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Year of assignment cannot be in the future."
+            )
+
+        if company.start_audit_period > company.end_audit_period:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Audit period start date cannot be after end date."
+            )
+
+        if (company.start_audit_period.year != company.year_of_assignment):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Audit period dates must fall within the year of assignment."
+            )
+        
+        existing_company = self.company_repository.get_company_by_options("company_name", company.company_name)
+        if existing_company.result is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A company with this name is already registered."
+            )
+
         new_company = self.company_repository.create_company(
             company_name=company.company_name,
             year_of_assignment=company.year_of_assignment,
@@ -90,51 +101,52 @@ class CompanyService(BaseService):
         if not new_company:
             raise InternalServerError("Failed to create company. Please try again later")
 
-        result = Company(
-            id=str(new_company.id),
-            company_name=new_company.company_name,
-            year_of_assignment=new_company.year_of_assignment, 
-            start_audit_period=new_company.start_audit_period, 
-            end_audit_period=new_company.end_audit_period,
-            created_at=new_company.created_at,
-            updated_at=new_company.updated_at,
-        )
-
         return CreateCompanyResponse(
             message="Company successfully registered", 
-            result=result.model_dump()
+            result=None,
+            meta=None,
         )
 
-
-    def update_company(self, company_id: str, company: UpdateCompanyRequest) -> UpdateCompanyResponse:
+    def update_company(self, company_id: UUID, company_info: UpdateCompanyRequest) -> UpdateCompanyResponse:
         existing_company = self.company_repository.get_company_by_options("id", company_id)
         
-        if not existing_company:
+        if existing_company.result is None:
             raise HTTPException(status_code=404, detail="Company not found")
 
-        updated_company = self.company_repository.update_company(company_id, company)
+        current_year = datetime.now().year
+        if company_info.year_of_assignment > current_year:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Year of assignment cannot be in the future."
+            )
 
-        return Company(
-            id=updated_company.id,
-            company_name=updated_company.company_name,
-            year_of_assignment=updated_company.year_of_assignment, 
-            start_audit_period=updated_company.start_audit_period, 
-            end_audit_period=updated_company.end_audit_period,
-            created_at=updated_company.created_at,
-            updated_at=updated_company.updated_at,
-        )
+        if company_info.start_audit_period > company_info.end_audit_period:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Audit period start date cannot be after end date."
+            )
+
+        if (company_info.start_audit_period.year != company_info.year_of_assignment):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Audit period dates must fall within the year of assignment."
+            )
+
+        response = self.company_repository.update_company(company_id, company_info)
+
+        if not response:
+            raise InternalServerError("Failed to update user. Please try again later")
+
+        return response
 
 
-    def delete_company(self, company_id: str) -> DeleteCompanyResponse:
+    def delete_company(self, company_id: UUID) -> DeleteCompanyResponse:
         existing_company = self.company_repository.get_company_by_options("id", company_id)
         if not existing_company:
-            raise HTTPException(status_code=404, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Company not found")
 
-        success = self.company_repository.delete_company(company_id)
-        if not success:
+        response = self.company_repository.delete_company(company_id)
+        if not response:
             raise InternalServerError("Failed to delete company. Please try again later")
         
-        # it should delete the folder in one drive
-
-        return {"message": "Company deleted successfully"}
-
+        return response

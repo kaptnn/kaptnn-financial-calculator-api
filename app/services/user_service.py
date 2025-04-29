@@ -1,6 +1,5 @@
 from uuid import UUID 
-from datetime import datetime
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, Union, Optional
 from fastapi import HTTPException
 from app.core.exceptions import InternalServerError
 from app.repositories.user_repo import UserRepository 
