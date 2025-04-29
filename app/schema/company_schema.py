@@ -28,7 +28,7 @@ class FindAllCompaniesResponse(BaseModel):
 
 class FindCompanyByOptionsRequest(BaseModel):
     option: str
-    value: Optional[UUID]
+    value: Optional[Union[str, UUID]]
 
 class FindCompanyByOptionsResponse(BaseModel):
     message: str

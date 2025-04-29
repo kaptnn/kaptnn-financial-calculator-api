@@ -1,99 +1,110 @@
-import uuid
-from datetime import datetime
-from typing import Tuple, TypedDict, Optional, Union
-from fastapi import HTTPException
+from uuid import UUID
+from typing import Any, Dict, Optional, Union
+from fastapi import HTTPException, status
 from app.core.exceptions import InternalServerError
 from app.repositories.docs_category_repo import DocsCategoryRepository 
 from app.services.base_service import BaseService
-from app.schema.doc_category_schema import CreateDocumentCategoryRequest, CreateDocumentCategoryResponse, DeleteDocumentCategoryResponse, DocumentCategory, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse
-
-class DocsCategoryDict(TypedDict):
-    id: str
-    name: str
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+from app.schema.doc_category_schema import CreateDocumentCategoryRequest, CreateDocumentCategoryResponse, DeleteDocumentCategoryResponse, DocumentCategory, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse, FindAllDocumentCategoriesResponse, FindDocumentCategoryByOptionsResponse
 
 class DocsCategoryService(BaseService):
+    ALLOWED_SORTS = {"id", "created_at"}
+    ALLOWED_ORDERS = {"asc", "desc"}
+    ALLOWED_FILTERS = {"id", "name"}
+
     def __init__(self, docs_category_repository: DocsCategoryRepository):
         self.docs_category_repository = docs_category_repository
         super().__init__(docs_category_repository)
 
-    def get_all_docs_categories(self, page: int, limit: int, sort: str, order: str) -> dict:
-        docs_categories = self.docs_category_repository.get_all_docs_category()
+    def get_all_docs_categories(
+        self, 
+        page: int = 1, 
+        limit: int = 100, 
+        sort: str = "created_at", 
+        order: str = "asc",
+        filters: Optional[Dict[str, Any]] = None
+    ) -> FindAllDocumentCategoriesResponse:
+        if page < 1:
+            page = 1
+        if not (1 <= limit <= 100):
+            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
+        
+        if sort not in self.ALLOWED_SORTS:
+            raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort!r}. Must be one of {self.ALLOWED_SORTS}")
+        
+        order = order.lower()
+        if order not in self.ALLOWED_ORDERS:
+            raise HTTPException(status_code=400, detail=f"Invalid order: {order!r}. Must be one of {self.ALLOWED_ORDERS}")
+        
+        if filters is not None:
+            invalid_keys = set(filters.keys()) - self.ALLOWED_FILTERS
+            if invalid_keys:
+                raise HTTPException(status_code=400, detail=f"Invalid filter keys: {invalid_keys}. Allowed filters are {self.ALLOWED_FILTERS}")
+        
+        return self.docs_category_repository.get_all_docs_category(
+            page=page,
+            limit=limit,
+            sort=sort,
+            order=order,
+            filters=filters
+        )
+        
 
-        if not docs_categories:
-            return {"result": [], "total_items": 0, "total_pages": 0}
+    def get_docs_category_by_options(
+        self, 
+        option: str, 
+        value: Union[str, UUID]
+    ) -> FindDocumentCategoryByOptionsResponse:
+        if option not in self.ALLOWED_FILTERS:
+            raise HTTPException(status_code=400, detail="Invalid option field")
+        
+        response = self.docs_category_repository.get_docs_category_by_options(option, value)
 
-        if sort not in docs_categories[0]:
-            raise HTTPException(status_code=400, detail=f"Invalid sort field: {sort}")
-
-        reverse = (order.lower() == "desc")
-        companies_sorted = sorted(docs_categories, key=lambda x: x.get(sort, ""), reverse=reverse)
-
-        total_items = len(companies_sorted)
-        total_pages = (total_items + limit - 1) // limit
-        offset = (page - 1) * limit
-        paginated_docs_categories = companies_sorted[offset : offset + limit]
-
-        return {
-            "result": paginated_docs_categories,
-            "total_items": total_items,
-            "total_pages": total_pages,
-        }
-
-    def get_docs_category_by_options(self, option: str, value: Union[str, uuid.UUID]) -> Optional[Tuple[DocsCategoryDict]]:
-        result = self.docs_category_repository.get_docs_category_by_options(option, value)
-
-        if not result:
+        if response.result is None:
             raise HTTPException(status_code=404, detail="Document category not found")
         
-        return DocsCategoryDict(
-            id=str(result.id),
-            name=result.name,
-            created_at=result.created_at,
-            updated_at=result.updated_at,
-        )
+        return response
 
     def create_docs_category(self, docs_category: CreateDocumentCategoryRequest) -> CreateDocumentCategoryResponse:
-        new_docs_category = self.docs_category_repository.create_docs_category(name=docs_category.name)
+        existing = self.docs_category_repository.get_docs_category_by_options("name", docs_category.name)
+        if existing.result is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A company with this name is already registered."
+            )
+        
+        new_docs_category = self.docs_category_repository.create_docs_category(
+            name=docs_category.name
+        )
 
         if not new_docs_category:
             raise InternalServerError("Failed to create document category. Please try again later")
 
-        result = DocumentCategory(
-            id=str(new_docs_category.id),
-            name=new_docs_category.name,
-            created_at=new_docs_category.created_at,
-            updated_at=new_docs_category.updated_at,
-        )
-
         return CreateDocumentCategoryResponse(
-            message="Document Category successfully registered", 
-            result=result.model_dump()
+            message="Document category successfully registered",
+            result=None,
+            meta=None
         )
 
-    def update_docs_category(self, docs_category_id: str, docs_category: UpdateDocumentCategoryRequest) -> UpdateDocumentCategoryResponse:
+    def update_docs_category(self, docs_category_id: UUID, docs_category: UpdateDocumentCategoryRequest) -> UpdateDocumentCategoryResponse:
         existing_docs_category = self.docs_category_repository.get_docs_category_by_options("id", docs_category_id)
         
-        if not existing_docs_category:
+        if existing_docs_category.result is None:
             raise HTTPException(status_code=404, detail="Document Category not found")
 
-        updated_docs_category = self.docs_category_repository.update_docs_category(docs_category_id, docs_category)
+        response = self.docs_category_repository.update_docs_category(docs_category_id, docs_category)
 
-        return DocumentCategory(
-            id=updated_docs_category.id,
-            name=updated_docs_category.name,
-            created_at=updated_docs_category.created_at,
-            updated_at=updated_docs_category.updated_at,
-        )
+        if not response:
+            raise InternalServerError("Failed to update user. Please try again later")
 
-    def delete_docs_category(self, docs_category_id: str) -> DeleteDocumentCategoryResponse:
+        return response
+
+    def delete_docs_category(self, docs_category_id: UUID) -> DeleteDocumentCategoryResponse:
         existing_docs_category = self.docs_category_repository.get_docs_category_by_options("id", docs_category_id)
         if not existing_docs_category:
             raise HTTPException(status_code=404, detail="Document category not found")
 
-        success = self.docs_category_repository.delete_docs_category(docs_category_id)
-        if not success:
+        response = self.docs_category_repository.delete_docs_category(docs_category_id)
+        if not response:
             raise InternalServerError("Failed to delete document category. Please try again later")
         
-        return {"message": "Document category deleted successfully"}
+        return response

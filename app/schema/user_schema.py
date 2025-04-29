@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from app.schema.base_schema import FindBase, ModelBaseInfo
@@ -41,7 +41,7 @@ class FindAllUsersResponse(BaseModel):
 
 class FindUserByOptionsRequest(BaseModel):
     option: str
-    value: Optional[UUID]
+    value: Optional[Union[str, UUID]]
 
 class FindUserByOptionsResponse(BaseModel):
     message: str
