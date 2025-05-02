@@ -31,3 +31,11 @@ class UserLogoutResponse(BaseModel):
     message: str
     result:  Optional[Dict]
     meta: Optional[Dict]
+
+class UserRefreshTokenRequest(BaseModel):
+    refresh_token: str
+    
+class UserRefreshTokenResponse(BaseModel):
+    message: str
+    result: Token
+    meta: Optional[Dict]

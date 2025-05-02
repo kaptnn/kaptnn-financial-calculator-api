@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 from app.core import security
 from app.repositories.user_repo import UserRepository
-from app.schema.auth_schema import UserLogoutResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
+from app.schema.auth_schema import Token, UserLogoutResponse, UserRefreshTokenRequest, UserRefreshTokenResponse, UserRegisterRequest, UserLoginRequest, UserRegisterResponse, UserLoginResponse
 from app.core.exceptions import DuplicatedError, InternalServerError
 from app.services.base_service import BaseService
 
@@ -76,8 +76,13 @@ class AuthService(BaseService):
 
         return response
     
-    def create_new_access_token_service(self, refresh_token):
-        return security.create_new_access_token(refresh_token)
+    def create_new_access_token_service(self, refresh_token: str) -> UserRefreshTokenResponse:
+        token = security.create_new_access_token(refresh_token)
+        return UserRefreshTokenResponse(
+            message="Renew token is generated",
+            result=token,
+            meta=None
+        )
     
     def forgot_password(self):
         pass

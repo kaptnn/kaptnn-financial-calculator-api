@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, status
+from typing import Optional
+from fastapi import APIRouter, Cookie, Depends, HTTPException, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.dependencies import get_current_user
 from app.core.middleware import inject
-from app.schema.auth_schema import UserRegisterRequest, UserRegisterResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse
+from app.schema.auth_schema import UserRefreshTokenRequest, UserRefreshTokenResponse, UserRegisterRequest, UserRegisterResponse, UserLoginRequest, UserLoginResponse, UserLogoutResponse
 from app.schema.user_schema import User
 from app.services.auth_service import AuthService
 
@@ -46,15 +47,23 @@ def sign_out(
     return service.sign_out()
 
 @router.post("/token/refresh", 
+    response_model=UserRefreshTokenResponse,
     status_code=status.HTTP_200_OK,
     response_model_exclude={"result": {"__all__": {"password"}}}, 
     response_model_exclude_none=True)
 @inject
 def create_new_access_token(
-    refresh_token: str,
+    credentials: UserRefreshTokenRequest = Depends(),
+    refresh_token_cookie: Optional[str] = Cookie(None),
     service: AuthService = Depends(Provide[Container.auth_service]),
 ):
-    return service.create_new_access_token_service(refresh_token)
+    token = credentials.refresh_token or refresh_token_cookie
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing refresh token",
+        )
+    return service.create_new_access_token_service(token)
 
 @router.get('/me')
 @inject

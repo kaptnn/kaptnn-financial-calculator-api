@@ -2,6 +2,7 @@ from fastapi import HTTPException
 import jwt
 from datetime import datetime, timedelta
 from app.core.config import configs
+from app.schema.auth_schema import Token
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -40,7 +41,8 @@ def create_new_access_token(refresh_token: str):
         "sub": payload.get("sub"),
     }
 
-    new_access_token = create_access_token(new_payload)
-    new_refresh_token = create_refresh_token(new_payload)
-
-    return {"access_token": new_access_token, "refresh_token": new_refresh_token}
+    return Token(
+        token_type="Bearer",
+        access_token  = create_access_token(new_payload),
+        refresh_token = create_refresh_token(new_payload),
+    )
