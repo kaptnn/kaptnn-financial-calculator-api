@@ -5,8 +5,10 @@ from typing import Callable, Any
 from dependency_injector.wiring import inject as di_inject
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from app.services.base_service import BaseService
+from app.core.config import configs
 
 def inject(func: Callable[..., Any]) -> Callable[..., Any]:
     @di_inject
@@ -27,9 +29,14 @@ def inject(func: Callable[..., Any]) -> Callable[..., Any]:
 
 def register_middleware(app: FastAPI):
     app.add_middleware(
+        SessionMiddleware,
+        secret_key=configs.CLIENT_SECRET
+    )
+    
+    app.add_middleware(
         CORSMiddleware, 
         allow_origins=["*"],
+        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"]
     )

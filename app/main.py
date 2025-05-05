@@ -21,12 +21,11 @@ class App(FastAPI):
         self.db = self.container.db()
 
         register_middleware(self.app)
-        
+
         @self.app.get(f"{configs.API_PREFIX}/health", tags=["Health Check"])
         async def root() -> dict:
             return {"message": "Welcome to KAP TNN Calculator API"}
         
         self.app.include_router(v1_routers, prefix=configs.API_PREFIX)
-        
-app_instance = App()
-app = app_instance.app
+
+app = App().app

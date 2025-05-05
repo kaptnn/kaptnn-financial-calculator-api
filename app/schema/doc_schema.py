@@ -40,6 +40,7 @@ class FindDocumentByOptionsResponse(BaseModel):
 
 class CreateDocumentRequest(BaseModel):
     document_name: str 
+    request_id: UUID
 
 class CreateDocumentResponse(BaseModel):
     message: str

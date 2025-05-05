@@ -7,9 +7,25 @@ from app.routes.endpoints.company import router as company_router
 from app.routes.endpoints.docs_category import router as docs_category_router
 from app.routes.endpoints.docs_request import router as docs_request_router
 from app.routes.endpoints.docs_manager import router as docs_manager_router
+from app.routes.endpoints.docs import router as docs_router
+from app.services.docs_manager.docs_service import DocsService
+from app.core.msal import fastapi_msal_auth
+
+msal_auth_router = fastapi_msal_auth.router
 
 routers = APIRouter()
-router_list = [auth_router, user_router, calculator_router, goal_seeking_router,  company_router, docs_category_router, docs_request_router, docs_manager_router]
+router_list = [
+    auth_router, 
+    user_router, 
+    calculator_router, 
+    goal_seeking_router, 
+    company_router, 
+    docs_category_router, 
+    docs_request_router, 
+    docs_manager_router, 
+    docs_router,
+    msal_auth_router
+]
 
 for router in router_list:
     routers.include_router(router)
