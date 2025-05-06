@@ -18,7 +18,7 @@ router = APIRouter(prefix="/companies", tags=["Company"])
 @inject
 def get_all_companies(
     page: int = Query(1, ge=1, description="Page number"),
-    limit: int = Query(5, ge=1, le=100, description="Number of users per page"),
+    limit: int = Query(10, ge=1, le=100, description="Number of users per page"),
     sort: str = Query("created_at", description="Field to sort by"),
     order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order (asc or desc)"),
     year_of_assignment: Optional[int] = Query(None, description="Filter by exact year of assignment"),
