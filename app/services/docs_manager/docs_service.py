@@ -7,8 +7,7 @@ from app.schema.doc_schema import CreateDocumentRequest, CreateDocumentResponse,
 from app.schema.user_schema import User
 from app.services.base_service import BaseService
 from app.repositories.docs_repo import DocsRepository
-from fastapi_msal import MSALClientConfig, MSALAuthorization, UserInfo
-from app.core.config import configs
+from app.repositories.company_repo import CompanyRepository
 
 class DocsService(BaseService):
     ALLOWED_SORTS = {"id", "company_name", "created_at"}
@@ -23,9 +22,11 @@ class DocsService(BaseService):
     }
     MAX_SIZE = 10 * 1024 * 1024 
 
-    def __init__(self, docs_repository: DocsRepository):
+    def __init__(self, docs_repository: DocsRepository, company_repository: CompanyRepository):
         self.docs_repository = docs_repository
+        self.company_repository = company_repository
         super().__init__(docs_repository)
+        super().__init__(company_repository)
 
     def get_all_docs(
         self, 
@@ -84,6 +85,10 @@ class DocsService(BaseService):
     ) -> CreateDocumentResponse:
         if file.content_type not in self.ALLOWED_MIME:
             raise HTTPException(status_code=415, detail="Unsupported file type")
+        
+        existing_company = self.company_repository.get_company_by_options("id", current_user.company_id)
+        if existing_company.result is None:
+            raise HTTPException(status_code=404, detail="Company not found")
 
         file_id = uuid4()
         ext = os.path.splitext(file.filename)[1] or ""
@@ -117,7 +122,7 @@ class DocsService(BaseService):
             document_name=metadata.document_name,
             company=current_user.company_id,
             request_id=metadata.request_id,
-            document_path=f"OneDrive:/YourAppFolder/{safe_name}",
+            document_path=f"OneDrive:/{existing_company.result.company_name.capitalize()}/{safe_name}",
             file_size=total,
             mime_type=file.content_type,
         )
