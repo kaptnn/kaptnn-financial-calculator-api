@@ -25,7 +25,7 @@ class CompanyRepository(BaseRepository):
             
             if filters:
                 if year_of_assignment := filters.get("year_of_assignment"):
-                    statement = statement.where(Company.year_of_assignment == year_of_assignment)
+                    statement = statement.where(Company.year_of_assignment == int(year_of_assignment))
                 if name_query := filters.get("name"):
                     statement = statement.where(Company.company_name.ilike(f"%{name_query}%"))
 

@@ -194,4 +194,4 @@ class DocsService(BaseService):
         return response
     
     def list_root_folder(self):
-        return self.docs_repository.list_root_folder()
+        return self.docs_repository.list_root_folder_by_current_user()

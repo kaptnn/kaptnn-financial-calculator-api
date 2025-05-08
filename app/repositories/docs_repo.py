@@ -192,17 +192,16 @@ class DocsRepository(BaseRepository):
         url = f"{MS_GRAPH_BASE_URL}/me/drives"
 
     def list_root_folder_by_current_user(self):
-        response = get_app_response()
-        token = response["access_token"]
+        msal = get_app_response()
+        token = msal["access_token"]
 
-        url = f"{MS_GRAPH_BASE_URL}/drives/80C1454493E5D07F"
+        url = f"{MS_GRAPH_BASE_URL}/drives/root:"
         response = requests.get(url, headers={"Authorization": f"Bearer {token}"})
 
         print(response.json())
 
         if response.status_code == 200:
-            data = response.json()
-            return [item for item in data["value"]]
+            return response.json()
         else:
             print(f"Failed to list root folder:  {response.status_code}")
 

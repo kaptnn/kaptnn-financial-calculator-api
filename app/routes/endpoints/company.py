@@ -27,7 +27,7 @@ def get_all_companies(
 ):
     filters: Dict[str, Any] = {}
     if year_of_assignment:
-        filters["year_of_assignment"] = year_of_assignment
+        filters["year_of_assignment"] = int(year_of_assignment)
     if name:
         filters["name"] = name
         

@@ -1,6 +1,8 @@
 from fastapi_msal import MSALAuthorization, MSALClientConfig, UserInfo
 from msal import ConfidentialClientApplication, PublicClientApplication
 from app.core.config import configs
+from azure.identity.aio import ClientSecretCredential
+from msgraph import GraphServiceClient
 
 AUTHORITY = f"https://login.microsoftonline.com/{configs.TENANT_ID}"
 SCOPE = ["https://graph.microsoft.com/.default"]
@@ -11,6 +13,14 @@ conf_app = ConfidentialClientApplication(
     client_credential=configs.CLIENT_SECRET,
     authority=AUTHORITY
 )
+
+_msal_app = ClientSecretCredential(
+    client_id=configs.APPLICATION_ID,
+    client_secret=configs.CLIENT_SECRET,
+    tenant_id=configs.TENANT_ID
+)
+
+client = GraphServiceClient(credentials=_msal_app, scopes=SCOPE)
 
 fastapi_msal_conf = MSALClientConfig(
     client_id=configs.APPLICATION_ID,
@@ -26,3 +36,8 @@ def get_app_response() -> dict:
         raise RuntimeError(f"MSAL error: {result.get('error_description')}")
     
     return result
+
+async def me():
+    user = await client.users.by_user_id('userPrincipalName').get()
+    if user:
+        print(user.display_name)

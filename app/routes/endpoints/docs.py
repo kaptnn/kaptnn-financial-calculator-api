@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 from uuid import UUID
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Query, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Query, UploadFile, status
 from dependency_injector.wiring import Provide
 from app.core.container import Container
 from app.core.middleware import inject
@@ -8,6 +8,7 @@ from app.core.dependencies import get_current_user
 from app.schema.doc_schema import CreateDocumentRequest, CreateDocumentResponse, DeleteDocumentResponse, FindAllDocumentsResponse, FindDocumentByOptionsResponse, UpdateDocumentRequest, UpdateDocumentResponse
 from app.schema.user_schema import User
 from app.services.docs_manager.docs_service import DocsService
+from app.core.msal import get_app_response, MS_GRAPH_BASE_URL, me, client
 
 router = APIRouter(prefix="/documents", tags=["Document Management"])
 
@@ -143,8 +144,12 @@ def delete_docs(
     status_code=status.HTTP_200_OK,
 )
 @inject
-def list_root_folders_endpoint(
+async def list_root_folders_endpoint(
     service: DocsService = Depends(Provide[Container.docs_service]),
     current_user: User = Depends(get_current_user),
 ):
-    return service.list_root_folder()
+    user = await client.users.by_user_id('userPrincipalName').get()
+    if user:
+        return user.display_name
+    
+    return None
