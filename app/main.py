@@ -25,7 +25,7 @@ class App(FastAPI):
         @self.app.get(f"{configs.API_PREFIX}/health", tags=["Health Check"])
         async def root() -> dict:
             return {"message": "Welcome to KAP TNN Calculator API"}
-        
+
         self.app.include_router(v1_routers, prefix=configs.API_PREFIX)
 
 app = App().app

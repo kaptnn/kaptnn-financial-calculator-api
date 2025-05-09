@@ -13,6 +13,8 @@ class Configs(BaseSettings):
 
     KEY: str = os.getenv("KEY", "secret")
 
+    UPLOAD_DIR_ROOT: str = "./storages"
+
     DATETIME_FORMAT: str = "%Y-%m-%dT%H:%M:%S"
     DATE_FORMAT: str = "%Y-%m-%d"
 

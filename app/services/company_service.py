@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 from uuid import UUID
 from typing import Any, Dict, Optional, Union
 from fastapi import HTTPException, status
@@ -6,6 +7,8 @@ from app.core.exceptions import InternalServerError
 from app.repositories.company_repo import CompanyRepository 
 from app.schema.company_schema import CreateCompanyRequest, CreateCompanyResponse, Company, FindAllCompaniesResponse, UpdateCompanyRequest, UpdateCompanyResponse, DeleteCompanyResponse, FindCompanyByOptionsResponse
 from app.services.base_service import BaseService
+from app.core.config import configs
+from app.utils.helpers import make_safe_onedrive_folder_name
 
 class CompanyService(BaseService):
     ALLOWED_SORTS = {"id", "company_name", "created_at"}
@@ -97,6 +100,9 @@ class CompanyService(BaseService):
             start_audit_period=company.start_audit_period,
             end_audit_period=company.end_audit_period
         )
+
+        safe_name = make_safe_onedrive_folder_name(company.company_name)
+        os.makedirs(f"{configs.UPLOAD_DIR_ROOT}/{safe_name}", exist_ok=True)
 
         if not new_company:
             raise InternalServerError("Failed to create company. Please try again later")

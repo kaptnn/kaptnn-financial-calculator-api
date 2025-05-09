@@ -1,6 +1,5 @@
 import os
 from uuid import UUID
-import httpx
 import requests
 from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
@@ -8,7 +7,7 @@ from typing import Any, Callable, Dict, Optional, Union
 from app.models.doc_model import Document
 from app.repositories.base_repo import BaseRepository
 from app.schema.doc_schema import DeleteDocumentResponse, FindAllDocumentsResponse, Document as DocumentSchema, FindDocumentByOptionsResponse, UpdateDocumentRequest, UpdateDocumentResponse
-from app.core.msal import get_app_response, MS_GRAPH_BASE_URL
+from app.core.msal import get_app_response, MS_GRAPH_BASE_URL, client
 
 class DocsRepository(BaseRepository):
     def __init__(self, session_factory: Callable[..., AbstractContextManager[Session]]):
@@ -151,7 +150,7 @@ class DocsRepository(BaseRepository):
         token = response["access_token"]
 
         session_url = (
-            MS_GRAPH_BASE_URL+"drive/root:/YourAppFolder/{name}:/createUploadSession"
+            MS_GRAPH_BASE_URL+"/drive/root:/Documents/{name}:/createUploadSession"
         ).format(name=remote_name)
 
         resp = requests.post(
@@ -195,7 +194,8 @@ class DocsRepository(BaseRepository):
         msal = get_app_response()
         token = msal["access_token"]
 
-        url = f"{MS_GRAPH_BASE_URL}/drives/root:"
+        url = f"{MS_GRAPH_BASE_URL}/drives/b!WZrvKxB3Tkizoko0leI02brJ6Cnv1jxIgW3kc9-ojUU-iNsh-Uj5SbaKpP8AHzMd/root/children"
+        print(url)
         response = requests.get(url, headers={"Authorization": f"Bearer {token}"})
 
         print(response.json())

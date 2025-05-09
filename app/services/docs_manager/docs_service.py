@@ -8,6 +8,8 @@ from app.schema.user_schema import User
 from app.services.base_service import BaseService
 from app.repositories.docs_repo import DocsRepository
 from app.repositories.company_repo import CompanyRepository
+from app.core.config import configs
+from app.utils.helpers import make_safe_onedrive_folder_name
 
 class DocsService(BaseService):
     ALLOWED_SORTS = {"id", "company_name", "created_at"}
@@ -94,10 +96,11 @@ class DocsService(BaseService):
         ext = os.path.splitext(file.filename)[1] or ""
         safe_name = f"{file_id}{ext}"
 
-        upload_dir = "./utils"
-        os.makedirs(upload_dir, exist_ok=True)
+        company_folder_name = make_safe_onedrive_folder_name(existing_company.result.company_name)
 
-        tmp_path = os.path.join(upload_dir, safe_name)
+        os.makedirs(f"{configs.UPLOAD_DIR_ROOT}/{company_folder_name}", exist_ok=True)
+
+        tmp_path = os.path.join(f"{configs.UPLOAD_DIR_ROOT}/{company_folder_name}", safe_name)
 
         total = 0
         with open(tmp_path, "wb") as out:
@@ -112,10 +115,10 @@ class DocsService(BaseService):
                     raise HTTPException(status_code=413, detail="File too large")
                 out.write(chunk)
 
-        background_tasks.add_task(
-            self.docs_repository.push_to_onedrive,
-            tmp_path, safe_name
-        )
+        # background_tasks.add_task(
+        #     self.docs_repository.push_to_onedrive,
+        #     tmp_path, safe_name
+        # )
 
         record = self.docs_repository.create_docs(
             uploader=current_user.id,
