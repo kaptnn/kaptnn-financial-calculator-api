@@ -125,7 +125,7 @@ class DocsService(BaseService):
             document_name=metadata.document_name,
             company=current_user.company_id,
             request_id=metadata.request_id,
-            document_path=f"OneDrive:/{existing_company.result.company_name.capitalize()}/{safe_name}",
+            document_path=f"storages/{company_folder_name}/{safe_name}",
             file_size=total,
             mime_type=file.content_type,
         )

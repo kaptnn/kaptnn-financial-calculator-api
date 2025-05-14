@@ -26,8 +26,6 @@ class DocsRepository(BaseRepository):
             statement = select(Document)
 
             if filters:
-                if year_of_assignment := filters.get("year_of_assignment"):
-                    statement = statement.where(Document.year_of_assignment == year_of_assignment)
                 if name_query := filters.get("name"):
                     statement = statement.where(Document.company_name.ilike(f"%{name_query}%"))
 
@@ -50,7 +48,7 @@ class DocsRepository(BaseRepository):
                 result=documents_list,
                 meta={ 'current_page': page, "total_items": total_items, 'total_pages': total_pages }
             )
-        
+         
     def get_docs_by_options(self, option: str, value: Union[str, UUID]) -> FindDocumentByOptionsResponse:
         with self.session_factory() as session:
             statement = select(Document).where(getattr(Document, option) == value)
