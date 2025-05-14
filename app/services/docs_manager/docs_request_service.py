@@ -127,24 +127,6 @@ class DocsRequestService(BaseService):
                 detail="Due date cannot be in the past."
             )
         
-        upload = docs_request_info.upload_date
-        if upload.tzinfo is None:
-            upload = upload.replace(tzinfo=timezone.utc)
-        else:
-            upload = upload.astimezone(timezone.utc)
-
-        due = existing_docs_request.result.due_date
-        if due.tzinfo is None:
-            due = due.replace(tzinfo=timezone.utc)
-        else:
-            due = due.astimezone(timezone.utc)
-
-        if upload < due:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Upload date cannot be before the due date."
-            )
-        
         response = self.docs_req_repository.update_docs_request(docs_request_id, docs_request_info)
 
         if not response:

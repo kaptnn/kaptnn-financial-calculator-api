@@ -39,7 +39,6 @@ class FindDocumentByOptionsResponse(BaseModel):
     meta: Optional[FindBase]
 
 class CreateDocumentRequest(BaseModel):
-    document_name: str 
     request_id: UUID
 
 class CreateDocumentResponse(BaseModel):

@@ -3,7 +3,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy import Column, DateTime, func
-from sqlmodel import Field, Relationship, Column, Enum
+from sqlmodel import Field, Relationship, Column, Enum, Text
 from app.models.user_model import User
 from app.models.base_model import BaseModel
 from app.models.doc_category_model import DocumentCategory
@@ -23,7 +23,7 @@ class DocumentRequest(BaseModel, table=True):
     category_id: uuid.UUID = Field(foreign_key="document_categories.id")
     
     request_title: str = Field(nullable=False)
-    request_desc: str = Field(nullable=False)
+    request_desc: str = Field(sa_column=Column(Text, nullable=False))
     due_date: datetime = Field()
     upload_date: Optional[datetime] = Field(default=None)
     status: RequestStatus = Field(sa_column=Column(Enum(RequestStatus)), default=RequestStatus.pending)

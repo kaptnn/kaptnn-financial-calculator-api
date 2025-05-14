@@ -122,7 +122,7 @@ class DocsService(BaseService):
 
         record = self.docs_repository.create_docs(
             uploader=current_user.id,
-            document_name=metadata.document_name,
+            document_name=safe_name,
             company=current_user.company_id,
             request_id=metadata.request_id,
             document_path=f"storages/{company_folder_name}/{safe_name}",

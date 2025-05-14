@@ -58,8 +58,6 @@ class UpdateDocumentReqRequest(BaseModel):
     target_user_id: Optional[UUID]
     category_id: Optional[UUID]
     due_date: Optional[datetime]
-    upload_date: Optional[datetime]
-    status: Optional[RequestStatus]
 
 class UpdateDocumentReqResponse(BaseModel):
     message: str

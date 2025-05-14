@@ -76,13 +76,11 @@ def get_docs_by_id(
 def create_docs(
     background_tasks: BackgroundTasks,
     file: UploadFile      = File(...),
-    document_name: str    = Form(...),
     request_id: UUID      = Form(...),
     service: DocsService = Depends(Provide[Container.docs_service]),
     current_user: User = Depends(get_current_user),
 ):
     metadata = CreateDocumentRequest(
-        document_name=document_name,
         request_id=request_id
     )
 
