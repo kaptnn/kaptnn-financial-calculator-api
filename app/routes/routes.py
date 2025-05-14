@@ -6,9 +6,7 @@ from app.routes.endpoints.user import router as user_router
 from app.routes.endpoints.company import router as company_router
 from app.routes.endpoints.docs_category import router as docs_category_router
 from app.routes.endpoints.docs_request import router as docs_request_router
-from app.routes.endpoints.docs_manager import router as docs_manager_router
 from app.routes.endpoints.docs import router as docs_router
-from app.services.docs_manager.docs_service import DocsService
 
 routers = APIRouter()
 router_list = [
@@ -19,7 +17,6 @@ router_list = [
     company_router, 
     docs_category_router, 
     docs_request_router, 
-    docs_manager_router, 
     docs_router,
 ]
 

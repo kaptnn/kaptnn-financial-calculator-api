@@ -23,7 +23,6 @@ class Container(containers.DeclarativeContainer):
             "app.routes.endpoints.company",
             "app.routes.endpoints.docs_category",
             "app.routes.endpoints.docs_request",
-            "app.routes.endpoints.docs_manager",
             "app.routes.endpoints.docs",
             "app.core.dependencies",
         ]
