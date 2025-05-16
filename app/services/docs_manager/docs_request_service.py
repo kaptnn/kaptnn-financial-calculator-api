@@ -119,13 +119,6 @@ class DocsRequestService(BaseService):
         target_user = self.user_repository.get_user_by_options("id", docs_request_info.target_user_id)
         if target_user is None:
             raise InternalServerError("User not found. Cannot create document request.")
-
-        current_time = datetime.now(timezone.utc)
-        if docs_request_info.due_date < current_time:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Due date cannot be in the past."
-            )
         
         response = self.docs_req_repository.update_docs_request(docs_request_id, docs_request_info)
 

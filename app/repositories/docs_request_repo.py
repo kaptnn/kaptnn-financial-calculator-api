@@ -123,11 +123,11 @@ class DocsRequestRepository(BaseRepository):
             session.commit()
             session.refresh(result)
 
-            DocumentRequestSchema.model_validate(result)
+            response = DocumentRequestSchema.model_validate(result)
 
             return UpdateDocumentReqResponse(
                 message="Success updated data from repository",
-                result=None,
+                result=response,
                 meta=None
             )
 
