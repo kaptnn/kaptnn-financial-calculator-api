@@ -20,7 +20,7 @@ class Configs(BaseSettings):
 
     DB: str = os.getenv("DB", "mysql")
     DB_USER: str = os.getenv("DB_USER", "root")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
     DB_HOST: str = os.getenv("DB_HOST", "localhost")
     DB_PORT: str = os.getenv("DB_PORT", "3306")
     DB_NAME: str = os.getenv("DB_NAME", "FastAPI")
@@ -40,17 +40,6 @@ class Configs(BaseSettings):
     DB_URI: str = (
         f"{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{ENV_DATABASE_MAPPER[ENV]}"
     )
-
-    MAIL_USERNAME: str = os.getenv("MAIL_USERNAME")
-    MAIL_PASSWORD: str = os.getenv("MAIL_PASSWORD")
-    MAIL_FROM: str = os.getenv("MAIL_FROM")
-    MAIL_PORT: int = int(os.getenv("MAIL_PORT", 587))
-    MAIL_SERVER: str = os.getenv("MAIL_SERVER")
-    MAIL_FROM_NAME: str = os.getenv("MAIL_FROM_NAME")
-    MAIL_STARTTLS: bool = os.getenv("MAIL_STARTTLS", "true").lower() == "true"
-    MAIL_SSL_TLS: bool = os.getenv("MAIL_SSL_TLS", "false").lower() == "true"
-    USE_CREDENTIALS: bool = os.getenv("USE_CREDENTIALS", "true").lower() == "true"
-    VALIDATE_CERTS: bool = os.getenv("VALIDATE_CERTS", "true").lower() == "true"
 
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "secret")
     JWT_ACCESS_TOKEN_EXP: str = os.getenv("ACCESS_TOKEN_EXP", "1d")
@@ -72,9 +61,6 @@ class Configs(BaseSettings):
     PAGE_SIZE: int = 20
     ORDERING: str = "-id"
 
-class TestConfigs(Configs):
-    ENV: str = "testing"
-
 class LocalConfig(Configs):
     ...
 
@@ -83,10 +69,10 @@ class ProductionConfig(Configs):
 
 def get_config():
     env = os.getenv('ENV', 'development')
-    config_type = {
-        'test': TestConfigs(),
+    config_type = {      
         'development': LocalConfig(),
         'prod': ProductionConfig(),
+        'production': ProductionConfig(),
     }
     return config_type[env]
 
