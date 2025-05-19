@@ -9,11 +9,11 @@ class Configs(BaseSettings):
     ENV: str = os.getenv("ENV", "development")
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "FastAPI")
     API_PREFIX: str = "/api/v1"
+    
     PROJECT_ROOT: str = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-    KEY: str = os.getenv("KEY", "secret")
-
     UPLOAD_DIR_ROOT: str = "./storages"
+    
+    KEY: str = os.getenv("KEY", "secret")
 
     DATETIME_FORMAT: str = "%Y-%m-%dT%H:%M:%S"
     DATE_FORMAT: str = "%Y-%m-%d"
@@ -61,14 +61,17 @@ class Configs(BaseSettings):
     PAGE_SIZE: int = 20
     ORDERING: str = "-id"
 
+    NGROK_AUTHTOKEN: str = os.getenv("NGROK_AUTHTOKEN", "secret")
+    NGROK_DOMAIN: str = os.getenv('NGROK_DOMAIN', "http://localhost:8000")
+
 class LocalConfig(Configs):
-    ...
+    pass
 
 class ProductionConfig(Configs):
     DEBUG: bool = False
 
 def get_config():
-    env = os.getenv('ENV', 'development')
+    env = os.getenv('ENV', 'development').lower()
     config_type = {      
         'development': LocalConfig(),
         'prod': ProductionConfig(),
