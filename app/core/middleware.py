@@ -32,10 +32,14 @@ def register_middleware(app: FastAPI):
         SessionMiddleware,
         secret_key=configs.CLIENT_SECRET
     )
+
+    origins = [
+        "http://localhost:3000"
+    ]
     
     app.add_middleware(
         CORSMiddleware, 
-        allow_origins=configs.CORS_ORIGINS,
+        allow_origins=origins,
         allow_headers=["*"],
         allow_methods=["*"],
         allow_credentials=True,

@@ -29,7 +29,7 @@ def create_app() -> FastAPI:
         docs_url=f"{configs.API_PREFIX}/docs",
         redoc_url=f"{configs.API_PREFIX}/redoc",
         openapi_url=f"{configs.API_PREFIX}/openapi.json",
-        lifespan=lifespan
+        # lifespan=lifespan
     )
 
     container = Container()
