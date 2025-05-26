@@ -1,13 +1,25 @@
-#! /usr/bin/env bash
+#! /usr/bin/env sh
 
 set -e
 set -x
 
-# Let the DB start
-python app/backend_pre_start.py
+host="$DB_HOST"
+port="${DB_PORT:-3306}"
 
-# Run migrations
+echo "⏳ Waiting for MySQL at $host:$port..."
+
+until nc -z "$host" "$port"; do
+  sleep 1
+done
+
+echo "✅ MySQL is up - executing command"
+exec "$@"
+
+echo "🚀 Running Alembic migrations..."
 alembic upgrade head
 
-# Create initial data in DB
-python app/initial_data.py
+echo "🌱 Seeding superadmin user..."
+python -m app.utils.seed
+
+echo "🔥 Starting Uvicorn..."
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1

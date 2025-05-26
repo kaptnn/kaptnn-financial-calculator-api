@@ -1,6 +1,7 @@
 import os
 from typing import List
 from dotenv import load_dotenv
+from pydantic import EmailStr
 from pydantic_settings import BaseSettings 
 
 load_dotenv()
@@ -63,6 +64,11 @@ class Configs(BaseSettings):
 
     NGROK_AUTHTOKEN: str = os.getenv("NGROK_AUTHTOKEN", "secret")
     NGROK_DOMAIN: str = os.getenv('NGROK_DOMAIN', "http://localhost:8000")
+
+    SUPER_ADMIN_NAME: str = os.getenv("SUPER_ADMIN_NAME", "Super Admin")
+    SUPER_ADMIN_EMAIL: str = os.getenv("SUPER_ADMIN_EMAIL", "superadmin@gmail.com")
+    SUPER_ADMIN_PASSWORD: str = os.getenv("SUPER_ADMIN_PASSWORD", "Password123!")
+    SUPER_ADMIN_COMPANY_NAME: str = os.getenv("SUPER_ADMIN_COMPANY_NAME", "Super Admin Company")
 
 class LocalConfig(Configs):
     pass

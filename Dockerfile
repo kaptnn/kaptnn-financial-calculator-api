@@ -13,7 +13,6 @@ RUN apk add --no-cache gcc musl-dev curl
 WORKDIR /app
 
 COPY requirements.txt .
-
 RUN pip install --upgrade pip && pip install --prefix=/install --no-deps -r requirements.txt
 
 # -------- Runtime Stage --------
@@ -31,7 +30,14 @@ WORKDIR /app
 
 COPY --from=builder /install /usr/local
 
+COPY alembic.ini .
+COPY alembic ./alembic
+
 COPY app ./app
+COPY scripts ./scripts
+
+RUN chmod +x scripts/prestart.sh
 
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+
+CMD ["./scripts/prestart.sh"]
