@@ -26,6 +26,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DEFAULT_TIMEOUT=100 \
     PYTHONPATH=/usr/local/lib/python3.12/site-packages
 
+RUN apk add --no-cache bash curl
+
 WORKDIR /app
 
 COPY --from=builder /install /usr/local
@@ -40,4 +42,4 @@ RUN chmod +x scripts/prestart.sh
 
 EXPOSE 8000
 
-CMD ["./scripts/prestart.sh"]
+CMD ["sh", "./scripts/prestart.sh"]
