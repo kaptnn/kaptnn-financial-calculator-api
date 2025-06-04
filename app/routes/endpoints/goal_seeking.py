@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from typing import List
-from app.services.goal_seeking_weighted_average import GoalSeekingWeightedAverage
+from app.services.calculators.goal_seeking_weighted_average import GoalSeekingWeightedAverage
 
 router = APIRouter(prefix="/goal-seeking", tags=["Goal Seeking"])
 
-@router.get("/weighted-average", status_code=status.HTTP_200_OK)
+@router.post("/weighted-average", status_code=status.HTTP_200_OK)
 def goal_seeking(
     n_total: int = Query(1, description="Total row of loss rate and weight"),
     goal: float = Query(..., description="Target weighted average"),

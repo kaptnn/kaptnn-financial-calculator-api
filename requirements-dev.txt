@@ -1,0 +1,5 @@
+-r requirements.txt
+pywin32==308
+flake8==7.2.0
+black==25.1.0
+pytest==8.3.5

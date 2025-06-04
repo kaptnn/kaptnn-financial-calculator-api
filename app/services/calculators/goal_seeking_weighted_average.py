@@ -1,4 +1,5 @@
 from scipy.optimize import root_scalar
+from openpyxl import Workbook # type: ignore
 from typing import List
 
 class GoalSeekingWeightedAverage:
@@ -44,3 +45,19 @@ class GoalSeekingWeightedAverage:
         if not result.converged:
             raise ValueError("Goal seeking failed to converge.")
         return result.root
+    
+    def export_to_excel(self, values: List[float], weights: List[float], goal: float, file_name: str = "Results.xlsx"):
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Results"
+
+        ws.append(["Values", "Weights", "Weighted Average", "Goal Seek Result"])
+
+        wa = self.weighted_average(values, weights)
+        gs = self.goal_seek(lambda x, v, w: self.weighted_average(v, [x] + w[1:]), goal, (values, weights))
+
+        ws.append([str(values), str(weights), wa, gs])
+
+        file_path = f"/tmp/{file_name}" 
+        wb.save(file_path)
+        return file_path

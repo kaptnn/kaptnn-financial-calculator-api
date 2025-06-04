@@ -1,0 +1,36 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+
+# Testing and coverage
+.mypy_cache/
+.coverage
+htmlcov/
+tests/
+
+# Packaging
+*.egg-info/
+build/
+dist/
+
+# Logs
+*.log
+
+# Environment and editor files
+.env
+*.swp
+.vscode/
+.idea/
+
+# Databases
+*.db
+*.sqlite3
+
+# Docker files (optional – ignore only if not needed inside image build context)
+Dockerfile
+docker-compose.yml
