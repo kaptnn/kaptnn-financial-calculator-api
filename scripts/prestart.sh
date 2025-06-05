@@ -1,18 +1,17 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 set -e
 set -x
 
-host="$DB_HOST"
+host="${DB_HOST}"
 port="${DB_PORT:-3306}"
 
-echo "⏳ Waiting for MySQL at $host:$port..."
+echo "⏳ Waiting for MySQL at ${host}:${port}..."
 
 until nc -z "$host" "$port"; do
   sleep 1
 done
 
-echo "✅ MySQL is up - executing command"
-exec "$@"
+echo "✅ MySQL is up!"
 
 echo "🚀 Running Alembic migrations..."
 alembic upgrade head
