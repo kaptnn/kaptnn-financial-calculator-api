@@ -33,13 +33,16 @@ def register_middleware(app: FastAPI):
         secret_key=configs.CLIENT_SECRET
     )
 
-    origins = [
-        "http://localhost:3000"
+    base_origins = [
+        "http://localhost:3000",
+        "http://frontend:3000"
     ]
+
+    origins = list(dict.fromkeys(base_origins + configs.CORS_ORIGINS))
     
     app.add_middleware(
         CORSMiddleware, 
-        allow_origins=["*"],
+        allow_origins=origins,
         allow_headers=["*"],
         allow_methods=["*"],
         allow_credentials=True,
