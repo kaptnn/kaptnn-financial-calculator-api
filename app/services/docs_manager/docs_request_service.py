@@ -137,3 +137,10 @@ class DocsRequestService(BaseService):
             raise InternalServerError("Failed to delete document request. Please try again later")
         
         return response
+
+
+    def get_doc_request_category_summary(self):
+        return self.docs_req_repository.doc_request_category_summary()
+    
+    def get_doc_status_count(self):
+        return self.docs_req_repository.doc_status_count()

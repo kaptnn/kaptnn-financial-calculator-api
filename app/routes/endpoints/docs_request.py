@@ -61,6 +61,34 @@ def get_all_docs_requests(
         },
     }
 
+@router.get("/summary", status_code=status.HTTP_200_OK)
+@inject
+def get_all_docs_requests(
+    service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
+    current_user: User = Depends(get_current_user),
+):
+    summary = service.get_doc_request_category_summary()
+
+    return {
+        "message": "Document summary retrieved successfully",
+        "result": summary,
+        "meta": None,
+    }
+
+@router.get("/summary/status", status_code=status.HTTP_200_OK)
+@inject
+def get_all_docs_requests(
+    service: DocsRequestService = Depends(Provide[Container.docs_request_service]),
+    current_user: User = Depends(get_current_user),
+):
+    summary_status = service.get_doc_status_count()
+
+    return {
+        "message": "Document summary retrieved successfully",
+        "result": summary_status,
+        "meta": None,
+    }
+
 @router.get("/{docs_request_id}", 
     response_model=FindDocumentReqByOptionsResponse, 
     status_code=status.HTTP_200_OK,

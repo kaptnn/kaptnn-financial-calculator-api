@@ -1,9 +1,10 @@
 from datetime import datetime
 from uuid import UUID
-from sqlmodel import Session, func, select
+from sqlmodel import Session, case, func, select
 from contextlib import AbstractContextManager
 from typing import Any, Callable, Dict, Union, Optional
-from app.models.doc_request_model import DocumentRequest
+from app.models.doc_category_model import DocumentCategory
+from app.models.doc_request_model import DocumentRequest, RequestStatus
 from app.repositories.base_repo import BaseRepository
 from app.schema.doc_request_schema import FindAllDocumentReqsResponse, FindDocumentReqByOptionsResponse, UpdateDocumentReqRequest, UpdateDocumentReqResponse, DeleteDocumentReqResponse, DocumentReq as DocumentRequestSchema
 
@@ -150,3 +151,56 @@ class DocsRequestRepository(BaseRepository):
                 result=None,
                 meta=None
             )
+        
+    def doc_request_category_summary(self):
+        with self.session_factory() as session:
+            total = func.count(DocumentRequest.id)
+            accepted = func.count(
+                case((DocumentRequest.status == RequestStatus.accepted, 1))
+            )
+
+            stmt = (
+                select(
+                    DocumentCategory.id.label("category_id"),
+                    DocumentCategory.name.label("category_name"),
+                    total.label("total"),
+                    accepted.label("accepted"),
+                )
+                .select_from(DocumentCategory)
+                .outerjoin(DocumentRequest, DocumentRequest.category_id == DocumentCategory.id)
+                .group_by(DocumentCategory.id, DocumentCategory.name)
+                .order_by(total.desc())
+            )
+                        
+            result = session.exec(stmt).all()
+            return [
+                {
+                    "category_id": row.category_id,
+                    "category_name": row.category_name,
+                    "total": row.total,
+                    "accepted": row.accepted,
+                }
+                for row in result
+            ]
+
+    def doc_status_count(self):
+        with self.session_factory() as session:
+            stmt = (
+                select(
+                    DocumentRequest.status,
+                    func.count().label("total")
+                )
+                .group_by(DocumentRequest.status)
+            )
+            results = session.exec(stmt).all()
+
+            actual_status_counts = {row.status: row.total for row in results}
+
+            full_status_summary = []
+            for status in RequestStatus:
+                full_status_summary.append({
+                    "status": status.value,
+                    "total": actual_status_counts.get(status.value, 0)
+                })
+
+            return full_status_summary
