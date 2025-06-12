@@ -46,6 +46,21 @@ def get_all_docs_categories(
         },
     }
 
+@router.get("/summary/category", 
+    status_code=status.HTTP_200_OK,  
+    response_model_exclude_none=True)
+@inject
+def get_doc_category_count(
+    service: DocsCategoryService = Depends(Provide[Container.docs_category_service]),
+    current_user = Depends(get_current_user),
+):
+    summary = service.get_category_count()
+    return {
+        "message": "Docs category summary retrieved successfully",
+        "result": summary,
+        "meta": None,
+    }
+
 @router.get("/{docs_category_id}", 
     response_model=FindDocumentCategoryByOptionsResponse, 
     status_code=status.HTTP_200_OK,

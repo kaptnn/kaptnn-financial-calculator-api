@@ -84,3 +84,6 @@ class UserService(BaseService):
             raise InternalServerError("Failed to update user. Please try again later")
 
         return response
+    
+    def get_user_profile_role_count(self):
+        return self.user_repository.user_profile_role_count()

@@ -155,3 +155,6 @@ class CompanyService(BaseService):
             raise InternalServerError("Failed to delete company. Please try again later")
         
         return response
+    
+    def get_company_user_count(self):
+        return self.company_repository.company_user_count()

@@ -108,3 +108,6 @@ class DocsCategoryService(BaseService):
             raise InternalServerError("Failed to delete document category. Please try again later")
         
         return response
+
+    def get_category_count(self):
+        return self.docs_category_repository.docs_category_count()

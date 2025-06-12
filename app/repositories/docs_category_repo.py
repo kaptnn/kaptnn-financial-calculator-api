@@ -3,6 +3,7 @@ from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
 from typing import Any, Callable, Dict, Union, Optional
 from app.models.doc_category_model import DocumentCategory
+from app.models.doc_request_model import DocumentRequest
 from app.repositories.base_repo import BaseRepository
 from app.schema.doc_category_schema import FindAllDocumentCategoriesResponse, FindDocumentCategoryByOptionsResponse, DocumentCategory as DocumentCategorySchema, UpdateDocumentCategoryRequest, UpdateDocumentCategoryResponse, DeleteDocumentCategoryResponse
 
@@ -118,3 +119,31 @@ class DocsCategoryRepository(BaseRepository):
                 result=None,
                 meta=None
             )
+        
+    def docs_category_count(self):
+        with self.session_factory() as session:
+            total = func.count(DocumentRequest.id)
+
+            stmt = (
+                select(
+                    DocumentCategory.name.label("category_name"),
+                    total.label("total"),
+                )
+                .select_from(DocumentCategory)
+                .outerjoin(DocumentRequest, DocumentRequest.category_id == DocumentCategory.id)
+                .group_by(DocumentCategory.id, DocumentCategory.name)
+            )
+
+            results = session.exec(stmt).all()
+            category_counts = {row.category_name: row.total for row in results}
+
+            all_categories = session.exec(select(DocumentCategory.name)).all()
+
+            full_summary = []
+            for category_name in all_categories:
+                full_summary.append({
+                    'name': category_name,
+                    'total': category_counts.get(category_name, 0)
+                })
+
+            return full_summary

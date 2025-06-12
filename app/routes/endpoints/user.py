@@ -69,6 +69,21 @@ def get_current_user_data(
         meta=None
     )
 
+@router.get("/summary/role", 
+    status_code=status.HTTP_200_OK,  
+    response_model_exclude_none=True)
+@inject
+def get_user_profile_role_count(
+    service: UserService = Depends(Provide[Container.user_service]),
+    current_user: User = Depends(get_current_user)
+):
+    summary_role = service.get_user_profile_role_count()
+    return {
+        "message": "Users summary retrieved successfully",
+        "result": summary_role,
+        "meta": None,
+    }
+
 @router.put("/me/profile", 
     response_model=UpdateUserProfileResponse, 
     status_code=status.HTTP_200_OK, 

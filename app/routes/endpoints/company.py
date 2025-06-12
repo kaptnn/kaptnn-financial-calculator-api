@@ -49,6 +49,22 @@ def get_all_companies(
         },
     }
 
+@router.get("/summary/user", 
+    status_code=status.HTTP_200_OK,
+    response_model_exclude_none=True)
+@inject
+def get_company_user_count(
+    service: CompanyService = Depends(Provide[Container.company_service]),
+    current_user: User = Depends(get_current_user),
+):
+    
+    summary = service.get_company_user_count()
+    return {
+        "message": "Company summary retrieved successfully",
+        "result": summary,
+        "meta": None,
+    }
+
 @router.get("/me", 
     response_model=FindCompanyByOptionsResponse, 
     status_code=status.HTTP_200_OK,

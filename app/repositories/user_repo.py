@@ -4,7 +4,7 @@ from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
 from typing import Any, Callable, Dict, Union, Optional
 from app.models.user_model import User
-from app.models.profile_model import Profile
+from app.models.profile_model import Profile, Role
 from app.repositories.base_repo import BaseRepository
 from app.schema.user_schema import DeleteUserResponse, FindAllUsersResponse, FindUserByOptionsResponse, UpdateUserProfileRequest, User as UserSchema, Profile as ProfileSchema, UpdateUserProfileResponse
 
@@ -22,7 +22,7 @@ class UserRepository(BaseRepository):
         filters: Optional[Dict[str, Any]] = None
     ) -> FindAllUsersResponse:
         with self.session_factory() as session:
-            statement = select(User, Profile).join(Profile, isouter=True)
+            statement = select(User, Profile).join(Profile, isouter=True).where(User.name != 'Super Admin')
 
             if filters:
                 if email := filters.get("email"):
@@ -143,3 +143,26 @@ class UserRepository(BaseRepository):
                 result=None, 
                 meta=None
             )
+        
+    def user_profile_role_count(self):
+        with self.session_factory() as session:
+            stmt = (
+                select(
+                    Profile.role, 
+                    func.count().label("total")
+                )
+                .group_by(Profile.role)
+            )
+
+            results = session.exec(stmt).all() 
+            role_counts = {row.role: row.total for row in results}
+
+            full_role_summary = []
+            for role in Role:
+                full_role_summary.append({
+                    'name': role.value,
+                    'total': role_counts.get(role.value, 0)
+                })
+
+            return full_role_summary
+            

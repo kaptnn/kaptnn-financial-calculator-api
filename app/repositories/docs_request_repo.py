@@ -199,7 +199,7 @@ class DocsRequestRepository(BaseRepository):
             full_status_summary = []
             for status in RequestStatus:
                 full_status_summary.append({
-                    "status": status.value,
+                    "name": status.value,
                     "total": actual_status_counts.get(status.value, 0)
                 })
 

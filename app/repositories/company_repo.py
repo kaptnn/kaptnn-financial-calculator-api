@@ -4,7 +4,9 @@ from sqlmodel import Session, func, select
 from contextlib import AbstractContextManager
 from typing import Any, Callable, Dict, Optional, Union
 from app.models.company_model import Company
+from app.models.user_model import User
 from app.repositories.base_repo import BaseRepository
+from app.core.config import configs
 from app.schema.company_schema import DeleteCompanyResponse, FindAllCompaniesResponse, Company as CompanySchema, FindCompanyByOptionsResponse, UpdateCompanyRequest, UpdateCompanyResponse
 
 class CompanyRepository(BaseRepository):
@@ -21,7 +23,7 @@ class CompanyRepository(BaseRepository):
         filters: Optional[Dict[str, Any]] = None
     ) -> FindAllCompaniesResponse:
         with self.session_factory() as session:
-            statement = select(Company)
+            statement = select(Company).where(Company.company_name != configs.SUPER_ADMIN_COMPANY_NAME)
             
             if filters:
                 if year_of_assignment := filters.get("year_of_assignment"):
@@ -121,3 +123,27 @@ class CompanyRepository(BaseRepository):
                 result=None,
                 meta=None
             )
+        
+    def company_user_count(self):
+        with self.session_factory() as session:
+            user_count = func.count(User.id).label("user_count")
+
+            stmt = (
+                select(
+                    Company.company_name.label("name"),
+                    user_count.label("total")
+                )
+                .select_from(Company)
+                .join(User, Company.id == User.company_id, isouter=True)
+                .where(Company.company_name != "Super Admin Company")
+                .group_by(Company.id, Company.company_name)
+                .having(user_count > 0)
+                .order_by(user_count.desc())
+            )
+
+            results = session.exec(stmt).all()
+
+            return [
+                {"name": row.name, "total": row.total}
+                for row in results
+            ]
